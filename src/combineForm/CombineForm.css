@@ -1,0 +1,100 @@
+body{
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .container {
+    display: flex ;
+    justify-content: left;
+    justify-content: space-between;
+    align-items: center;
+    height: 100vh;
+    max-width: 70vw;
+    width: 100%;
+    margin: auto 150px ;
+  }
+  .container > form {
+    width: 80%;
+    padding: 20px;
+    border-radius: 5px;
+    background: #fff;
+  }
+  pre {
+    width: 70%;
+    color: #fff;
+    font-size: larger;
+  }
+  
+  button {
+    padding: 20px 28px;
+    width: 100%;
+    background-color: #60b793;
+    border: none;
+    box-sizing: border-box;
+    color: white;
+  }
+  button:hover{
+    background-color: #7eb49d;
+  }
+  .errors {
+    color: red;
+    font-size: 14px;
+  }
+  input{
+    padding: 20px 28px;
+    width: 100%;
+    border: none;
+    background-color: #efefef;
+    box-sizing: border-box;
+    border-radius:5px ;
+  }
+  input:focus{
+    outline: 2px solid dodgerblue;
+  }
+  
+  /* big size banner and toggle */
+  
+  .toggle{
+    position: absolute;
+    width: 70vw;
+    height: 120vh;
+    border-radius: 50%;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 30px;
+    background-color: #60b793;
+    right: -380px;
+    top: -50px;
+  }
+  .signup{
+    margin: 15px auto;
+  }
+  a{
+    text-decoration: none;
+    color: dodgerblue;
+    font-size: 16px;
+  }
+  a:hover{
+    color:rgb(37, 88, 139);
+  }
+
+.red{
+  background-color: red !important;
+}
+.primarycolor{
+  background-color: #60b793;
+}
+
+
+@media (max-width:567px) {
+
+  .toggle-container{
+    display: none;
+    position: absolute;
+  }
+  
+}

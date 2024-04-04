@@ -1,25 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+// import CombineForm from "./combineForm/CombineForm";
+import DashBoard from "./DashBoard/DashBoard";
+import PageNotFound from "./PageNotFound/PageNotFount";
+import "bootstrap/dist/css/bootstrap.css";
+import LoginForm from "./LoginFormCloudGarage/LoginForm";
+import MailValidation from "./Fogot password/Mailvalidation/MailValidation";
+import InputOtp from "./Fogot password/InputOtp";
+import ResetPassword from "./Fogot password/Reset/Reset";
 
-function App() {
+// onclick redirect
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <Routes>
+        {/* Cloud garage Logins */}
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/mailvalidation" element={<MailValidation/>}/>
+        <Route path="/otp" element={<InputOtp/>}/>
+        <Route path="/resetPassword" element={<ResetPassword/>}/>
+        
+        {/* NORMAL - Cloud garage Logins */}
+        {/* <Route path="/" element={<CombineForm />} /> */}
+        <Route path="/dashboard" element={<DashBoard />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
   );
 }
-
-export default App;
