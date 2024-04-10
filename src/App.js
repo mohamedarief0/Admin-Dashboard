@@ -8,21 +8,23 @@ import LoginForm from "./LoginFormCloudGarage/LoginForm";
 import MailValidation from "./Fogot password/Mailvalidation/MailValidation";
 import InputOtp from "./Fogot password/InputOtp";
 import ResetPassword from "./Fogot password/Reset/Reset";
-
+import BuyerUpload from "./Buyer-Upload";
 // onclick redirect
 export default function App() {
   return (
       <Routes>
         {/* Cloud garage Logins */}
-        <Route path="/" element={<LoginForm />} />
+        <Route path="/" element={<LoginForm/>} />
         <Route path="/mailvalidation" element={<MailValidation/>}/>
         <Route path="/otp" element={<InputOtp/>}/>
         <Route path="/resetPassword" element={<ResetPassword/>}/>
+
         
         {/* NORMAL - Cloud garage Logins */}
         {/* <Route path="/" element={<CombineForm />} /> */}
-        <Route path="/dashboard" element={<DashBoard />} />
-        <Route path="*" element={<PageNotFound />} />
+        <Route path="/dashboard" element={<DashBoard/>} />
+        <Route path="/dashboard/payments" element={<BuyerUpload/>} />
+        <Route path="*" element={<PageNotFound/>} />
       </Routes>
   );
 }

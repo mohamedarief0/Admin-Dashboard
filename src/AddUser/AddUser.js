@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { PlusOutlined, EditTwoTone, DeleteTwoTone } from "@ant-design/icons";
-import { Button, Form, Input, Select, Upload, Space, Table, Tag } from "antd";
+import { Button, Form, Input, Select, Upload, Space, Table } from "antd";
 import "./AddUser.css";
 
 function AddUser() {
@@ -254,7 +254,7 @@ function AddUser() {
 
             {/* Upload component for image upload */}
             <Form.Item
-              label="Upload image"
+              label={<h6>Upload image</h6>}
               valuePropName="fileList"
               getValueFromEvent={normFile}
             >
@@ -281,7 +281,7 @@ function AddUser() {
         </div>
         <hr></hr>
       </div>
-      <Table className="table-Adduser" columns={columns} dataSource={data} />
+      <Table className="table-Adduser" columns={columns} dataSource={data}/>
     </div>
   );
 }
