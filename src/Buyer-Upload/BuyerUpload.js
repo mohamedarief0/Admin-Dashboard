@@ -1,7 +1,7 @@
 import React from "react";
 import "./BuyerUpload.css";
 import HeaderComponent from "../Header/HeaderComponent";
-import { Button, Form, Input, Select, Upload, Space, Table } from "antd";
+import { Table } from "antd";
 
 function BuyerUpload() {
   const columns = [
