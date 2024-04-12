@@ -108,7 +108,7 @@ function BuyerUpload() {
   return (
     <div>
       <HeaderComponent />
-      <div className="buyper-section">
+      <div className="buyer-section">
         <h6 className="payment-title">Buyer Payment</h6>
         <Table columns={columns} dataSource={dataWithTotalRow} />
         <hr></hr>

@@ -9,21 +9,27 @@ import MailValidation from "./Fogot password/Mailvalidation/MailValidation";
 import InputOtp from "./Fogot password/InputOtp";
 import ResetPassword from "./Fogot password/Reset/Reset";
 import BuyerUpload from "./Buyer-Upload";
+import Token from "./Token/Token";
+
+
 // onclick redirect
 export default function App() {
   return (
       <Routes>
-        {/* Cloud garage Logins */}
+        {/* Cloud garage ticket website */}
         <Route path="/" element={<LoginForm/>} />
         <Route path="/mailvalidation" element={<MailValidation/>}/>
         <Route path="/otp" element={<InputOtp/>}/>
         <Route path="/resetPassword" element={<ResetPassword/>}/>
-
+        <Route path="/dashboard" element={<DashBoard/>} />
+        <Route path="/dashboard/payments" element={<BuyerUpload/>} />
+        <Route path="/dashboard/token" element={<Token/>}/>
         
         {/* NORMAL - Cloud garage Logins */}
         {/* <Route path="/" element={<CombineForm />} /> */}
-        <Route path="/dashboard" element={<DashBoard/>} />
-        <Route path="/dashboard/payments" element={<BuyerUpload/>} />
+
+
+        {/* Page 404 Error  */}
         <Route path="*" element={<PageNotFound/>} />
       </Routes>
   );

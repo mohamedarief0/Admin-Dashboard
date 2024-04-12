@@ -17,20 +17,25 @@
   border-radius: 8px;
   border: 1px solid rgb(204, 204, 204);
 }
+
+/* outer grid container  */
 .grid-containers {
   display: grid;
   /* grid-template-columns:  repeat( 2, 4fr ); */
   grid-template-columns: 420px 200px;
   justify-content: space-between;
 }
+
+/* inner grid container  */
+
 .grid-container {
   display: grid;
   /* grid-template-rows: repeat(auto-fit, minmax(100px ,20px)); */
-  grid-template-columns: repeat(2, 3fr);
-  width: auto;
-  grid-gap: 20px 0px;
-  justify-content: center;
-  align-content: center;
+  grid-template-columns: repeat(2, 2fr);
+  /* width: auto; */
+  grid-gap: 20px 10px;
+  /* justify-content: space-between; */
+  /* align-content: center; */
   /* grid-template-columns:  repeat(auto-fit, minmax(100px, 2fr)) */
 }
 .btn-grid {
