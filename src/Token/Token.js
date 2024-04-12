@@ -103,7 +103,13 @@ function Token() {
       title: "Status",
       key: "status",
       dataIndex: "status",
-      render: (text) => <span style={{ color: "green" }}>{text}</span>,
+      render: (text) => {
+        let color = "red"; // Default color for invalid formats or pending status
+        if (text.includes("pdf") || text.includes("jpg")) {
+          color = "green"; // Green color for valid formats
+        }
+        return <span style={{ color }}>{text}</span>;
+      },
     },
   ];
 
@@ -117,9 +123,33 @@ function Token() {
       ticketDetails: "Captin Miller(tk.Pdf (2))",
       count: (
         <>
-          <span style={{ backgroundColor: "green", color: "white", padding: "5px 10px",  }}>3</span>
-          <span style={{ backgroundColor: "orange", color: "white", padding: "5px 10px", }}>0</span>
-          <span style={{ backgroundColor: "red", color: "white", padding: "5px 10px", }}>3</span>
+          <span
+            style={{
+              backgroundColor: "green",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            3
+          </span>
+          <span
+            style={{
+              backgroundColor: "orange",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            0
+          </span>
+          <span
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            3
+          </span>
         </>
       ),
       status: "tk.format",
@@ -132,12 +162,36 @@ function Token() {
       ticketDetails: "Captin Miller(tk.Pdf (2))",
       count: (
         <>
-          <span style={{ backgroundColor: "green", color: "white", padding: "5px 10px",  }}>3</span>
-          <span style={{ backgroundColor: "orange", color: "white", padding: "5px 10px", }}>2</span>
-          <span style={{ backgroundColor: "red", color: "white", padding: "5px 10px", }}>1</span>
+          <span
+            style={{
+              backgroundColor: "green",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            3
+          </span>
+          <span
+            style={{
+              backgroundColor: "orange",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            2
+          </span>
+          <span
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            1
+          </span>
         </>
       ),
-      status: "tk.Jpg(3)",
+      status: "tk.jpg(3)",
     },
     {
       key: "TR001",
@@ -147,12 +201,36 @@ function Token() {
       ticketDetails: "Captin Miller(tk.Pdf (2))",
       count: (
         <>
-          <span style={{ backgroundColor: "green", color: "white", padding: "5px 10px",  }}>3</span>
-          <span style={{ backgroundColor: "orange", color: "white", padding: "5px 10px", }}>3</span>
-          <span style={{ backgroundColor: "red", color: "white", padding: "5px 10px", }}>0</span>
+          <span
+            style={{
+              backgroundColor: "green",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            3
+          </span>
+          <span
+            style={{
+              backgroundColor: "orange",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            3
+          </span>
+          <span
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              padding: "5px 10px",
+            }}
+          >
+            0
+          </span>
         </>
       ),
-      status: "tk.Jpg(3)",
+      status: "tk.jpg(3)",
     },
   ];
 

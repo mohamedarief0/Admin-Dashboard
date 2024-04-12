@@ -4,14 +4,12 @@ import "./HeaderComponent.css";
 
 function HeaderComponent() {
   return (
-    
-      <div className="logoContainer">
-        <div className="logo-container-main">
-          <img className="LogoImg" src={LogoImg} alt="Cloud Garage logo" />
-          <h3>User-Profile</h3>
-        </div>
+    <div className="logoContainer">
+      <div className="logo-container-main">
+        <img className="LogoImg" src={LogoImg} alt="Cloud Garage logo" />
+        <h3>User-Profile</h3>
       </div>
-   
+    </div>
   );
 }
 
