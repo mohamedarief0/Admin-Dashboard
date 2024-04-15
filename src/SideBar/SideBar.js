@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { LogoutOutlined, HomeOutlined } from "@ant-design/icons";
 import { Layout, Menu, theme } from "antd";
-import AddUser from "../AddUser/AddUser";
-import BuyerUpload from "../Buyer-Upload";
-import Token from "../Token/Token";
 import { useNavigate } from "react-router-dom";
+// Main all components or content
 import HeaderComponent from "../Header/HeaderComponent"; // Import your HeaderComponent
+import MainDashboard from "../MainDashboard/MainDashboard";
+import Token from "../Token/Token";
+import BuyerUpload from "../Buyer-Upload";
+import AddUser from "../AddUser/AddUser";
+//icons
 import DashboardMonitorIcon from "../Asset/dashboard-monitoring-icon.svg";
 import AddUserIcon from "../Asset/group-icon.svg";
 import TicketIcon from "../Asset/tickets-icon.svg";
 import RupeeIcon from "../Asset/rupee-coin-solid-icon.svg";
+
 
 const { Header, Sider, Content } = Layout;
 
@@ -37,7 +41,7 @@ const App = () => {
   const renderContent = () => {
     switch (selectedKey) {
       case "/dashboard":
-        return <div>Main Dashboard Content</div>;
+        return <MainDashboard/>
       case "/token":
         return <Token />;
       case "/payment":
@@ -65,33 +69,33 @@ const App = () => {
           <Menu
             onClick={handleMenuClick}
             mode="inline"
-            // defaultSelectedKeys={["/dashboard"]}
+            defaultSelectedKeys={["/dashboard"]}
             selectedKeys={[selectedKey]}
             style={{ height: "100%", borderRight: 0 }}
             items={[
               {
                 key: "/dashboard",
-                icon: <img src={DashboardMonitorIcon} alt="Dashboard" />, // Use the imported SVG icon
+                icon: <img src={DashboardMonitorIcon} width={18} height={18} alt="DashboardIcon" />, // Use the imported SVG icon
                 label: "Main Dashboard",
               },
               {
                 key: "/token",
-                icon: <img src={TicketIcon} alt="ticketicon" />, // Use the imported SVG icon
+                icon: <img src={TicketIcon} width={18} height={18} alt="ticketIcon" />, // Use the imported SVG icon
                 label: "Token's",
               },
               {
                 key: "/payment",
-                icon: <img src={RupeeIcon} alt="Dashboard" />, // Use the imported SVG icon
+                icon: <img src={RupeeIcon} width={18} height={18} alt="PaymentIcon" />, // Use the imported SVG icon
                 label: "Payment",
               },
               {
                 key: "/user",
-                icon: <img src={AddUserIcon} alt="userIcon" />, // Use the imported SVG icon
+                icon: <img src={AddUserIcon} width={18} height={18} alt="userIcon" />, // Use the imported SVG icon
                 label: "User's",
               },
               {
                 key: "/logout",
-                icon: <img src={""} alt="logout" />, // Use the imported SVG icon
+                icon: <img src={""} alt="logoutIcon" />, // Use the imported SVG icon
                 icon: <LogoutOutlined />,
                 label: "Logout",
                 danger: true,
@@ -107,7 +111,7 @@ const App = () => {
               minHeight: 280,
               background: colorBgContainer,
               borderRadius: borderRadiusLG,
-              overflow: "auto", // Enable scrolling for the content
+              overflow: "auto", 
             }}
           >
             {renderContent()}

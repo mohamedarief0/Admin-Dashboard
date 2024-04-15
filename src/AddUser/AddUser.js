@@ -138,7 +138,7 @@ function AddUser() {
   return (
     <div>
       <div className="AddUser-section">
-        <h4>Add User</h4>
+        <h3>Add User</h3>
         <div className="AddUser-bg-color">
           {/* Form component */}
           <Form

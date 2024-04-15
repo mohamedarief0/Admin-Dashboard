@@ -6,9 +6,7 @@ export default function DashBoard() {
   return (
     <div className="Bg-Container">
       {/* <HeaderComponent /> */}
-      <div className="">
-        <SliderComponent />
-      </div>
+      <SliderComponent />
     </div>
   );
 }
