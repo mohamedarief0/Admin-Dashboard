@@ -53,7 +53,7 @@ const App = () => {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ height: "100vh" }}>
       <HeaderComponent /> {/* HeaderComponent */}
       <Layout>
         <Sider
@@ -62,12 +62,12 @@ const App = () => {
             paddingTop:15,
             height: "100vh",
             position: "fixed",
-            zIndex:12,
+            zIndex:1001,
             left: 0,
             top: 64,
             bottom: 0,
             background: colorBgContainer,
-            borderRadius: borderRadiusLG,
+            // borderRadius: borderRadiusLG,  // content background color
           }}
           trigger={null}
           collapsible
