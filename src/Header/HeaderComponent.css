@@ -12,12 +12,13 @@
 .logoContainer {
   width: 100%;
   background-color: white;
-  /* position: sticky; */
-  /* top: 0; */
-  /* z-index: 100; */
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .logo-container-main {
+  height: 64px;
   width: 100%;
   display: flex;
   align-items: center;

@@ -14,7 +14,6 @@ import AddUserIcon from "../Asset/group-icon.svg";
 import TicketIcon from "../Asset/tickets-icon.svg";
 import RupeeIcon from "../Asset/rupee-coin-solid-icon.svg";
 
-
 const { Header, Sider, Content } = Layout;
 
 const App = () => {
@@ -41,7 +40,7 @@ const App = () => {
   const renderContent = () => {
     switch (selectedKey) {
       case "/dashboard":
-        return <MainDashboard/>
+        return <MainDashboard />;
       case "/token":
         return <Token />;
       case "/payment":
@@ -59,6 +58,14 @@ const App = () => {
       <Layout>
         <Sider
           style={{
+            overflow: "auto",
+            paddingTop:15,
+            height: "100vh",
+            position: "fixed",
+            zIndex:12,
+            left: 0,
+            top: 64,
+            bottom: 0,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
           }}
@@ -75,22 +82,50 @@ const App = () => {
             items={[
               {
                 key: "/dashboard",
-                icon: <img src={DashboardMonitorIcon} width={18} height={18} alt="DashboardIcon" />, // Use the imported SVG icon
+                icon: (
+                  <img
+                    src={DashboardMonitorIcon}
+                    width={18}
+                    height={18}
+                    alt="DashboardIcon"
+                  />
+                ), // Use the imported SVG icon
                 label: "Main Dashboard",
               },
               {
                 key: "/token",
-                icon: <img src={TicketIcon} width={18} height={18} alt="ticketIcon" />, // Use the imported SVG icon
+                icon: (
+                  <img
+                    src={TicketIcon}
+                    width={18}
+                    height={18}
+                    alt="ticketIcon"
+                  />
+                ), // Use the imported SVG icon
                 label: "Token's",
               },
               {
                 key: "/payment",
-                icon: <img src={RupeeIcon} width={18} height={18} alt="PaymentIcon" />, // Use the imported SVG icon
+                icon: (
+                  <img
+                    src={RupeeIcon}
+                    width={18}
+                    height={18}
+                    alt="PaymentIcon"
+                  />
+                ), // Use the imported SVG icon
                 label: "Payment",
               },
               {
                 key: "/user",
-                icon: <img src={AddUserIcon} width={18} height={18} alt="userIcon" />, // Use the imported SVG icon
+                icon: (
+                  <img
+                    src={AddUserIcon}
+                    width={18}
+                    height={18}
+                    alt="userIcon"
+                  />
+                ), // Use the imported SVG icon
                 label: "User's",
               },
               {
@@ -106,12 +141,12 @@ const App = () => {
         <Layout>
           <Content
             style={{
-              margin: "24px 16px",
+              marginLeft:"206px",
               padding: 24,
               minHeight: 280,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-              overflow: "auto", 
+              // background: colorBgContainer,
+              // borderRadius: borderRadiusLG,
+              overflow: "auto",
             }}
           >
             {renderContent()}
