@@ -92,7 +92,10 @@ function BuyerUpload() {
   ];
 
   const totalAmountSum = data.reduce((acc, item) => acc + item.amount, 0);
-  const totalConvenienceFeeSum = data.reduce((acc, item) => acc + item.convenienceFee,0);
+  const totalConvenienceFeeSum = data.reduce(
+    (acc, item) => acc + item.convenienceFee,
+    0
+  );
   const totalSum = totalAmountSum + totalConvenienceFeeSum; // Calculate the total sum of Amount and Convenience fee
 
   const dataWithTotalRow = [
@@ -107,8 +110,9 @@ function BuyerUpload() {
 
   return (
     <div>
-      <HeaderComponent />
+      {/* <HeaderComponent /> */}
       <div className="buyer-section">
+        <h3 className="payment-title">Payment</h3>
         <h6 className="payment-title">Buyer Payment</h6>
         <Table columns={columns} dataSource={dataWithTotalRow} />
         <hr></hr>

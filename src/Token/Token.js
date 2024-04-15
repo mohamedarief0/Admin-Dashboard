@@ -236,7 +236,7 @@ function Token() {
 
   return (
     <div>
-      <HeaderComponent />
+      {/* <HeaderComponent /> */}
       <div className="buyer-section">
         <h3 className="payment-title">Token</h3>
         <h6 className="payment-title">Buyer Token's</h6>

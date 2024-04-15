@@ -10,6 +10,7 @@ import InputOtp from "./Fogot password/InputOtp";
 import ResetPassword from "./Fogot password/Reset/Reset";
 import BuyerUpload from "./Buyer-Upload";
 import Token from "./Token/Token";
+import AddUser from "./AddUser/AddUser";
 
 
 // onclick redirect
@@ -22,8 +23,9 @@ export default function App() {
         <Route path="/otp" element={<InputOtp/>}/>
         <Route path="/resetPassword" element={<ResetPassword/>}/>
         <Route path="/dashboard" element={<DashBoard/>} />
-        <Route path="/dashboard/payments" element={<BuyerUpload/>} />
-        <Route path="/dashboard/token" element={<Token/>}/>
+        <Route path="/user" element={<AddUser/>} />
+        <Route path="/payment" element={<BuyerUpload/>} />
+        <Route path="/token" element={<Token/>}/>
         
         {/* NORMAL - Cloud garage Logins */}
         {/* <Route path="/" element={<CombineForm />} /> */}
