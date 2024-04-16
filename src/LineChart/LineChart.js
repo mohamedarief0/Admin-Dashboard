@@ -1,7 +1,7 @@
 import React from "react";
 import Chart from "react-apexcharts";
 
-export default function LineChart({data,type}) {
+export default function LineChart({data,type, width, height}) {
   const {options,series} = data
   return (
     <>
@@ -9,7 +9,9 @@ export default function LineChart({data,type}) {
         options={options}
         series={series}
         type={type}
-        style={{width:380}}
+        width={width}
+        height={height}
+        // style={{width:380}}
       />
     </>
   );

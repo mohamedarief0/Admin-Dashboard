@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./MainDashboard.css";
 //icon
 import AddUserIcon from "../Asset/group-icon.svg";
-import { Form, DatePicker, Card, Col, Row } from "antd";
+import { Button, Form, DatePicker, Card, Col, Row } from "antd";
 import LineChart from "../LineChart";
 
 function MainDashboard() {
@@ -80,6 +80,17 @@ function MainDashboard() {
   const [totalIncomeDonut, setTotalIncomeDonut] = useState({
     series: [44, 55],
     options: {
+      // plotOptions: {
+      //   pie: {
+      //     donut: {
+      //       labels: {
+      //         show: true,
+      //         name: "Total",
+      //         value: 80,
+      //       },
+      //     },
+      //   },
+      // },
       chart: {
         type: "donut",
       },
@@ -242,6 +253,65 @@ function MainDashboard() {
     },
   });
 
+  // Overall Ticket details semi Circle gauge chart
+  const [overallTicketDetails, setOverallTicketDetails] = useState({
+    series: [76],
+    options: {
+      chart: {
+        type: "radialBar",
+        offsetY: -20,
+        sparkline: {
+          enabled: true,
+        },
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -90,
+          endAngle: 90,
+          track: {
+            background: "#e7e7e7",
+            strokeWidth: "97%",
+            margin: 5, // margin is in pixels
+            dropShadow: {
+              enabled: true,
+              top: 2,
+              left: 0,
+              color: "#999",
+              opacity: 1,
+              blur: 2,
+            },
+          },
+          dataLabels: {
+            name: {
+              show: false,
+            },
+            value: {
+              offsetY: -2,
+              fontSize: "22px",
+            },
+          },
+        },
+      },
+      grid: {
+        padding: {
+          top: -10,
+        },
+      },
+      fill: {
+        type: "line",
+        gradient: {
+          shade: "light",
+          shadeIntensity: 0.4,
+          inverseColors: false,
+          opacityFrom: 1,
+          opacityTo: 1,
+          stops: [0, 50, 53, 91],
+        },
+      },
+      labels: ["Average Results"],
+    },
+  });
+
   const config = {
     rules: [{ type: "object", required: true, message: "Please select date!" }],
   };
@@ -254,6 +324,7 @@ function MainDashboard() {
           <DatePicker size="large" />
         </Form.Item>
       </div>
+      {/*1st row*/}
       {/* Total income card chart */}
       {/* Total main grid div */}
       <div className="main-grid-container">
@@ -263,9 +334,9 @@ function MainDashboard() {
             <DatePicker />
           </div>
           <div className="">
-            <LineChart data={chartData} type="line" />
+            <LineChart data={chartData} type="line" width={380} />
           </div>
-          <LineChart data={totalIncomeDonut} type="donut" />
+          <LineChart data={totalIncomeDonut} type="donut" width={300} />
         </Card>
 
         {/* Overall upload card chart */}
@@ -275,7 +346,7 @@ function MainDashboard() {
             <DatePicker />
           </div>
           <div className="d-flex align-items-center">
-            <LineChart data={uploadTicket} type="area" />
+            <LineChart data={uploadTicket} type="area" width={380} />
           </div>
         </Card>
 
@@ -323,19 +394,48 @@ function MainDashboard() {
             <DatePicker />
           </div>
           <div className="d-flex align-items-center">
-            <LineChart data={downloadTicket} type="line" />
+            <LineChart data={downloadTicket} type="line" width={380} />
+          </div>
+        </Card>
+
+        {/* Overall Ticket details card chart */}
+        <Card className="item item-5">
+          <div className="d-flex justify-content-between">
+            <h6>Today Activity</h6>
+            <DatePicker />
+          </div>
+          <div className="d-flex align-items-center">
+            <LineChart
+              data={overallTicketDetails}
+              type="radialBar"
+              width={360}
+            />
+          </div>
+          <div className="d-flex align-items-center justify-content-between">
+            <Button size="small" type="primary">
+              Sold ticket
+            </Button>
+            <Button size="small" type="default">
+              Remaining Ticket
+            </Button>
+            <Button size="small" type="default">
+              Not sold Ticket
+            </Button>
           </div>
         </Card>
       </div>
 
+      {/*2nd row Details*/}
       {/* Overall Details container  */}
       <div>
         <div className="d-flex justify-content-between mt-5 payment-title">
           <h3 className="">Overall details</h3>
           <DatePicker />
         </div>
-        <Card className="d-flex">
-          <LineChart data={totalIncomeDonut} type="donut" />
+        <Card  className="d-flex justify-content-between ">
+          <LineChart data={totalIncomeDonut} type="donut" width={320} />
+          <LineChart data={totalIncomeDonut} type="donut" width={320} />
+          <LineChart data={totalIncomeDonut} type="donut" width={320} />
           {/* <LineChart data={totalIncomeDonut} type="donut" />
           <LineChart data={totalIncomeDonut} type="donut" /> */}
         </Card>
