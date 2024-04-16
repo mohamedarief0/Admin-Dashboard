@@ -10,7 +10,7 @@
   width: 120px;
 }
 .logoContainer {
-  width: 100%;
+  width: 100vw;
   background-color: white;
   position: sticky;
   top: 0;
@@ -19,10 +19,13 @@
 
 .logo-container-main {
   height: 64px;
-  width: 100%;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 5px 2rem;
-  box-shadow: 0px -10px 20px  grey;
+  /* box-shadow: 0px -10px 20px  grey; */
+}
+Link{
+  display: inline;
 }

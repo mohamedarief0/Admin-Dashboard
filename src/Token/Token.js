@@ -5,6 +5,18 @@ import "./Token.css";
 
 function Token() {
   // buyer Token data
+
+  //Expanding the row but I havent use 
+  const expandedRowRender = (record) => {
+    const formats = record.ticketDetails.split(",");
+    return (
+      <ul>
+        {formats.map((format, index) => (
+          <li key={index}>{format}</li>
+        ))}
+      </ul>
+    );
+  };
   const buyerColumns = [
     {
       title: "Token ID",
@@ -240,8 +252,12 @@ function Token() {
       <div className="buyer-section">
         <h3 className="payment-title">Token</h3>
         <h6 className="payment-title">Buyer Token's</h6>
-        <Table columns={buyerColumns} dataSource={BuyerData} />
-        <hr></hr>
+        <Table
+          columns={buyerColumns}
+          dataSource={BuyerData}
+          // expandable={{expandedRowRender}}
+        />
+        <hr/>
       </div>
       <div className="uploder-section">
         <h6 className="payment-title">Uploader Token's</h6>

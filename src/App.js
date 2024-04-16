@@ -1,7 +1,8 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 // import CombineForm from "./combineForm/CombineForm";
-import DashBoard from "./DashBoard/DashBoard";
+// import DashBoard from "./DashBoard/DashBoard";
+import DashBoard from "./SideBar";
 import PageNotFound from "./PageNotFound/PageNotFount";
 import "bootstrap/dist/css/bootstrap.css";
 import LoginForm from "./LoginFormCloudGarage/LoginForm";
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/otp" element={<InputOtp/>}/>
         <Route path="/resetPassword" element={<ResetPassword/>}/>
         <Route path="/dashboard" element={<DashBoard/>} />
+        {/* <Route path="/dashboard" element={<SideBar/>} /> */}
         <Route path="/user" element={<AddUser/>} />
         <Route path="/payment" element={<BuyerUpload/>} />
         <Route path="/token" element={<Token/>}/>

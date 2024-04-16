@@ -16,7 +16,7 @@ import RupeeIcon from "../Asset/rupee-coin-solid-icon.svg";
 
 const { Header, Sider, Content } = Layout;
 
-const App = () => {
+const SideBar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("/dashboard"); // State to keep track of the selected menu item
   const {
@@ -54,15 +54,17 @@ const App = () => {
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <HeaderComponent /> {/* HeaderComponent */}
+      <Header style={{ padding: 0, background: colorBgContainer }}>
+        <HeaderComponent /> {/* HeaderComponent */}
+      </Header>
       <Layout>
         <Sider
           style={{
             overflow: "auto",
-            paddingTop:15,
+            paddingTop: 15,
             height: "100vh",
             position: "fixed",
-            zIndex:1001,
+            zIndex: 1001,
             left: 0,
             top: 64,
             bottom: 0,
@@ -141,7 +143,7 @@ const App = () => {
         <Layout>
           <Content
             style={{
-              marginLeft:"206px",
+              marginLeft: "206px",
               padding: 24,
               minHeight: 280,
               // background: colorBgContainer,
@@ -157,4 +159,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default SideBar;

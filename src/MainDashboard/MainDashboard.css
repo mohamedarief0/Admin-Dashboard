@@ -1,9 +1,23 @@
-.card-container-bg{
-    background-color: #01B9F5;
-    color: white;
+.card-container-bg {
+  background-color: #01b9f5;
+  color: white;
+  /* width: 380px; */
+  /* height: max-content; */
 }
+.main-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: fit-content;
 
-.Adduser-img {
-    fill: white;
-  }
-  
+}
+/* gird child  */
+.item-1 {
+  grid-row: span 2;
+}
+.item-2 {
+}
+.item-3 {
+}
+.item-4 {
+}
