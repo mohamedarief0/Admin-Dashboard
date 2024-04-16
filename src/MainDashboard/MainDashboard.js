@@ -2,11 +2,19 @@ import React, { useState } from "react";
 import "./MainDashboard.css";
 //icon
 import AddUserIcon from "../Asset/group-icon.svg";
-import { Button, Form, DatePicker, Card, Col, Row } from "antd";
+import { Button, Form, DatePicker, Card, Col, Row,Checkbox } from "antd";
 import LineChart from "../LineChart";
 
 function MainDashboard() {
-  const [chartData, setChartData] = useState({
+  // Date picker 
+  const config = {
+    rules: [{ type: "object", required: true, message: "Please select date!" }],
+  };
+  //check box
+  const onChange = (e) => {
+    console.log(`checked = ${e.target.checked}`);
+  };
+  const [totalIncome, setTotalIncome] = useState({
     series: [
       {
         name: "This Week",
@@ -76,6 +84,7 @@ function MainDashboard() {
       },
     },
   });
+
   // totalIncomeDonut below the total icome card
   const [totalIncomeDonut, setTotalIncomeDonut] = useState({
     series: [44, 55],
@@ -107,6 +116,7 @@ function MainDashboard() {
           },
         },
       ],
+      labels: ["This week", "Last week"], 
     },
   });
 
@@ -312,11 +322,84 @@ function MainDashboard() {
     },
   });
 
-  const config = {
-    rules: [{ type: "object", required: true, message: "Please select date!" }],
-  };
+  // Overall details
+  // 2nD Row Movie donut
+  const [movie, setMovie] = useState({
+    series: [44, 55, 12, 40],
+    options: {
+      // plotOptions: {
+      //   pie: {
+      //     donut: {
+      //       labels: {
+      //         show: true,
+      //         name: {...}
+      //         value:{...},
+      //       },
+      //     },
+      //   },
+      // },
+      chart: {
+        type: "donut",
+      },
+      plotOptions: {
+        pie: {
+          offset: 5, // Adjust the offset value as needed
+        },
+      },
+      responsive: [
+        {
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 280,
+            },
+            legend: {
+              position: "top",
+            },
+          },
+        },
+      ],
+      labels: ["Download", "sold", "upload", "Remaining"], // Set the labels for each series
+      colors: ["#1486FF", "#05DFAD", "#BFDEFF", "#0C0815"],
+    },
+  });
+
+  // 2nD Row sports donut
+  const [sports, setsports] = useState({
+  series: [42, 23, 22, 50],
+  options: {
+    chart: {
+      type: "donut",
+    },plotOptions: {
+      pie: {
+        customScale: 1,
+        expandOnClick: true,
+        dataLabels: {
+          offset: 0,
+        },
+      },
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 280,
+          },
+          legend: {
+            position: "top",
+          },
+        },
+      },
+    ],
+    labels: ["Download", "sold", "upload", "Remaining"], // Set the labels for each series
+    colors: ["#1486FF", "#05DFAD", "#BFDEFF", "#0C0815"],
+  },
+});
+
+  
   return (
-    <div>
+    <>
       {/* Heading title  */}
       <div className="d-flex justify-content-between align-items-center">
         <h3 className="">Main DashBoard</h3>
@@ -324,29 +407,33 @@ function MainDashboard() {
           <DatePicker size="large" />
         </Form.Item>
       </div>
+
       {/*1st row*/}
       {/* Total income card chart */}
-      {/* Total main grid div */}
       <div className="main-grid-container">
-        <Card className="item item-1">
+        <Card bordered className="item item-1">
           <div className="d-flex justify-content-between">
             <h6>Today Activity </h6>
             <DatePicker />
           </div>
-          <div className="">
-            <LineChart data={chartData} type="line" width={380} />
+      {/* Total main Line grid div */}
+          <div className="mt-3">
+            <LineChart data={totalIncome} type="line" width={380} height={250}/>
           </div>
+          <hr/><Checkbox onChange={onChange}>Yearly income</Checkbox><hr/>
           <LineChart data={totalIncomeDonut} type="donut" width={300} />
+          <hr/><Checkbox onChange={onChange}>Transaction amount</Checkbox><hr/>
+          <LineChart data={totalIncomeDonut} type="donut" width={250} />
         </Card>
 
-        {/* Overall upload card chart */}
+        {/* Overall upload Area card chart */}
         <Card className="item item-2">
           <div className="d-flex justify-content-between">
             <h6>Today Activity</h6>
             <DatePicker />
           </div>
-          <div className="d-flex align-items-center">
-            <LineChart data={uploadTicket} type="area" width={380} />
+          <div className="mt-3">
+            <LineChart data={uploadTicket} type="area" width={380} height={260}/>
           </div>
         </Card>
 
@@ -404,7 +491,8 @@ function MainDashboard() {
             <h6>Today Activity</h6>
             <DatePicker />
           </div>
-          <div className="d-flex align-items-center">
+          <div className="">
+            <p>This month</p>
             <LineChart
               data={overallTicketDetails}
               type="radialBar"
@@ -432,15 +520,13 @@ function MainDashboard() {
           <h3 className="">Overall details</h3>
           <DatePicker />
         </div>
-        <Card  className="d-flex justify-content-between ">
+        <div className="overall-details">
+          <LineChart data={movie} type="donut" width={320} />
+          <LineChart data={sports} type="donut" width={320} />
           <LineChart data={totalIncomeDonut} type="donut" width={320} />
-          <LineChart data={totalIncomeDonut} type="donut" width={320} />
-          <LineChart data={totalIncomeDonut} type="donut" width={320} />
-          {/* <LineChart data={totalIncomeDonut} type="donut" />
-          <LineChart data={totalIncomeDonut} type="donut" /> */}
-        </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -1,15 +1,18 @@
+*{
+  box-sizing: border-box;
+}
 .card-container-bg {
   background-color: #01b9f5;
   color: white;
   width: 380px;
-  /* height: max-content; */
+
 }
 .main-grid-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  /* grid-template-rows: repeat(2, 200px); */
   gap: 10px;
-  width: fit-content;
-
+  width: auto;
 }
 /* gird child  */
 .item-1 {
@@ -20,4 +23,12 @@
 .item-3 {
 }
 .item-4 {
+}
+
+.overall-details{
+  display: flex;
+  justify-content: space-around;
+  background-color: white;
+  border-radius: 5px;
+  padding: 24px;
 }
