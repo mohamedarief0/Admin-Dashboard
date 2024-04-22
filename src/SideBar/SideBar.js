@@ -8,11 +8,13 @@ import MainDashboard from "../MainDashboard/MainDashboard";
 import Token from "../Token/Token";
 import BuyerUpload from "../Buyer-Upload";
 import AddUser from "../AddUser/AddUser";
+import PaymentTracking from "../PaymentTracking/PaymentTracking";
 //icons
 import DashboardMonitorIcon from "../Asset/dashboard-monitoring-icon.svg";
 import AddUserIcon from "../Asset/group-icon.svg";
 import TicketIcon from "../Asset/tickets-icon.svg";
 import RupeeIcon from "../Asset/rupee-coin-solid-icon.svg";
+import PaymentTrackingIcon from "../Asset/payment_tracking.svg";
 
 const { Header, Sider, Content } = Layout;
 
@@ -47,6 +49,8 @@ const SideBar = () => {
         return <BuyerUpload />;
       case "/user":
         return <AddUser />;
+      case "/paymenttracking":
+        return <PaymentTracking />;
       default:
         return null;
     }
@@ -54,7 +58,7 @@ const SideBar = () => {
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <Header style={{ padding: 0, background: colorBgContainer }}>
+      <Header style={{ padding: 0, marginBottom:20, background: colorBgContainer }}>
         <HeaderComponent /> {/* HeaderComponent */}
       </Header>
       <Layout>
@@ -66,7 +70,7 @@ const SideBar = () => {
             position: "fixed",
             zIndex: 1001,
             left: 0,
-            top: 64,
+            top: 78,
             bottom: 0,
             background: colorBgContainer,
             // borderRadius: borderRadiusLG,  // content background color
@@ -105,6 +109,17 @@ const SideBar = () => {
                   />
                 ), // Use the imported SVG icon
                 label: "Token's",
+              },{
+                key: "/paymenttracking",
+                icon: (
+                  <img
+                    src={PaymentTrackingIcon}
+                    width={18}
+                    height={18}
+                    alt="PaymentIcon"
+                  />
+                ), // Use the imported SVG icon
+                label: "Payment tracking",
               },
               {
                 key: "/payment",

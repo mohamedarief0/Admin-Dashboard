@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import { PlusOutlined, EditTwoTone, DeleteTwoTone } from "@ant-design/icons";
-import { Button, Form, Input, Select, Upload, Space, Table } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  Select,
+  Upload,
+  Space,
+  Table,
+  Checkbox,
+} from "antd";
 import "./AddUser.css";
 
 function AddUser() {
@@ -93,6 +102,16 @@ function AddUser() {
       dataIndex: "role",
     },
     {
+      title: "Permission",
+      key: "permission",
+      dataIndex: "permission",
+    },
+    {
+      title: "Status",
+      key: "status",
+      dataIndex: "status",
+    },
+    {
       title: "Action",
       key: "action",
       render: (_, record) => (
@@ -116,6 +135,8 @@ function AddUser() {
       email: "ajith@gmial.com",
       phone: 9654715781,
       role: "Super Admin",
+      permission: "All",
+      status: "Open",
     },
     {
       key: "002",
@@ -124,6 +145,8 @@ function AddUser() {
       email: "vijayjoseph@gmial.com",
       phone: 9657841084,
       role: "Super Admin",
+      permission: "All",
+      status: "Close",
     },
     {
       key: "003",
@@ -132,13 +155,20 @@ function AddUser() {
       email: "simbustr@gmial.com",
       phone: 99457812365,
       role: "Admin",
+      permission: "Token",
+      status: "close",
     },
   ];
+
+  //check box
+  const onChange = (e) => {
+    console.log(`checked = ${e.target.checked}`);
+  };
 
   return (
     <div>
       <div className="AddUser-section">
-      <h3 className="payment-title">Add user</h3>
+        <h3 className="payment-title">Add user</h3>
         <div className="AddUser-bg-color">
           {/* Form component */}
           <Form
@@ -220,6 +250,34 @@ function AddUser() {
                   <Select.Option value="Admin">Admin</Select.Option>
                 </Select>
               </Form.Item>
+              {/* Checkbox For permission */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  // justifyContent: "space-between",
+                }}
+                className="btn-span"
+              >
+                <h6 className="me-3">User Permission:</h6>
+                <Checkbox onChange={onChange}>Select All</Checkbox>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  // justifyContent: "space-between",
+                }}
+                className="btn-span"
+              >
+                <Checkbox onChange={onChange}>MainDashboard</Checkbox>
+                <Checkbox onChange={onChange}>PaymentTracking</Checkbox>
+                <Checkbox onChange={onChange}>Payment</Checkbox>
+                <Checkbox onChange={onChange}>Token</Checkbox>
+                <Checkbox onChange={onChange}>Adduser</Checkbox>
+              </div>
+
+              
               {/* Buttons for cancel and save actions */}
               <div
                 style={{
@@ -227,7 +285,7 @@ function AddUser() {
                   alignItems: "center",
                   justifyContent: "space-between",
                 }}
-                className="btn-grid"
+                className="btn-span"
               >
                 <Form.Item>
                   <Button

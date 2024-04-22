@@ -75,7 +75,7 @@ function LoginForm() {
 
           <Form.Item name="forgetpassword">
             <div className="forget-passowrd">
-              <Link to="mailvalidation">Forgot password</Link>
+              <Link to="mailvalidation" className="forgetpassword">Forgot password</Link>
             </div>
           </Form.Item>
 

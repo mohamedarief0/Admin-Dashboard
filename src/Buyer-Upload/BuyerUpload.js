@@ -17,8 +17,8 @@ function BuyerUpload() {
     },
     {
       title: "User Login",
-      dataIndex: "userLogin",
       key: "userLogin",
+      dataIndex: "userLogin",
     },
     {
       title: "Ticket Details",
@@ -62,7 +62,7 @@ function BuyerUpload() {
     {
       key: "TR001",
       date: "10/3/2024",
-      userLogin: "Dhanush",
+      userLogin: 9654784578 ,
       ticketDetails: "Pdf (2)",
       accountType: "IOB96A300029Q",
       amount: 400,
@@ -72,7 +72,7 @@ function BuyerUpload() {
     {
       key: "TR002",
       date: "10/3/2024",
-      userLogin: "Suriya",
+      userLogin: 9654784578 ,
       ticketDetails: "Jpg (2)",
       accountType: "Upi@010gpay",
       amount: 450,
@@ -82,7 +82,7 @@ function BuyerUpload() {
     {
       key: "TR003",
       date: "10/3/2024",
-      userLogin: "Karthi",
+      userLogin: 9654784578 ,
       ticketDetails: "PDF (2)",
       accountType: "IOB96A300029Q",
       amount: 400,
@@ -109,7 +109,7 @@ function BuyerUpload() {
   ];
 
   return (
-    <div>
+    <>
       {/* <HeaderComponent /> */}
       <div className="buyer-section">
         <h3 className="payment-title">Payment</h3>
@@ -121,7 +121,7 @@ function BuyerUpload() {
         <h6 className="payment-title">Uploader Payment</h6>
         <Table columns={columns} dataSource={dataWithTotalRow} />
       </div>
-    </div>
+    </>
   );
 }
 

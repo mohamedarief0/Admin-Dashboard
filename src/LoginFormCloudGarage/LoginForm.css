@@ -33,12 +33,12 @@ body {
   color: rgb(255, 255, 255);
   background-color: rgb(1, 185, 245);
 }
-a {
+.forgetpassword {
   text-decoration: none;
   font-size: 12px;
   color: #0067b8;
 }
-a:hover {
+.forgetpassword:hover{
   text-decoration: underline;
   font-size: 12px;
   color: #0067b8;
@@ -72,7 +72,7 @@ a:hover {
   margin-bottom: 15px;
 }
 .logoContainer {
-  width: auto;
+  /* width: auto; */
   display: flex;
   align-items: center;
   justify-content: center;

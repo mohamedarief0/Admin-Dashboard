@@ -5,15 +5,18 @@
   background-color: #01b9f5;
   color: white;
   width: 380px;
-
+  height: 45%;
 }
+
+/* Parent grind  */
 .main-grid-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  /* grid-template-rows: repeat(2, 200px); */
   gap: 10px;
   width: auto;
+  /* grid-template-rows: repeat(2, 200px); */
 }
+
 /* gird child  */
 .item-1 {
   grid-row: span 2;
@@ -25,8 +28,11 @@
 .item-4 {
 }
 
+
+/* 2nd row */
 .overall-details{
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-around;
   background-color: white;
   border-radius: 5px;

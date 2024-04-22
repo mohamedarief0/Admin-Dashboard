@@ -37,8 +37,13 @@
   /* align-content: center; */
   /* grid-template-columns:  repeat(auto-fit, minmax(100px, 2fr)) */
 }
-.btn-grid {
+.btn-span {
   grid-column: span 2;
+}
+.checkbox-para{
+  font-size: 10px;
+  color: gray;
+  
 }
 
 
