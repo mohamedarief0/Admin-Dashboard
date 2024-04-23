@@ -17,6 +17,13 @@ function AddUser() {
   const [form] = Form.useForm(); // Initialize form instance
   const [fileList, setFileList] = useState([]); // State for uploaded file list
   const [userData, setUserData] = useState([]); // State for user data array
+  const [individualCheckboxes, setIndividualCheckboxes] = useState({
+    MainDashboard: false,
+    PaymentTracking: false,
+    Payment: false,
+    Token: false,
+    Adduser: false,
+  }); // State for user setfiled values of checkbox
 
   // Custom function to normalize uploaded file data
   const normFile = (e) => {
@@ -52,12 +59,25 @@ function AddUser() {
     form
       .validateFields()
       .then((values) => {
+        const userId = values.userId;
+        
+        // Extract checkbox values
+        const permission = Object.keys(individualCheckboxes).filter(
+          (key) => individualCheckboxes[key]
+        );
+
+        // merge checkbox values with other form values
+        const userDataWithPermissions = {
+          ...values,
+          permission,
+        
+        };
         // If validation successful, add the form values to the user data array
         let newData;
         if (!Array.isArray(userData)) {
-          newData = [values];
+          newData = [userDataWithPermissions];
         } else {
-          newData = [...userData, values];
+          newData = [...userData, userDataWithPermissions];
         }
         setUserData(newData); // Update user data state
         console.log("User Data:", newData); // Log the user data to console
@@ -68,7 +88,6 @@ function AddUser() {
   };
 
   // Table Data
-
   const columns = [
     {
       title: "ID",
@@ -84,7 +103,6 @@ function AddUser() {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      // render: (text) => <a>{text}</a>,
     },
     {
       title: "Email",
@@ -127,6 +145,7 @@ function AddUser() {
       ),
     },
   ];
+
   const data = [
     {
       key: "001",
@@ -160,9 +179,29 @@ function AddUser() {
     },
   ];
 
-  //check box
-  const onChange = (e) => {
-    console.log(`checked = ${e.target.checked}`);
+  // Custom function to handle checkbox change
+  const handleCheckboxChange = (e) => {
+    const { checked } = e.target;
+
+    // Update state of individual checkboxes based on "Select All" checkbox
+    setIndividualCheckboxes({
+      MainDashboard: checked,
+      PaymentTracking: checked,
+      Payment: checked,
+      Token: checked,
+      Adduser: checked,
+    });
+  };
+
+  // Custom function to handle individual checkbox change
+  const handleIndividualChange = (e) => {
+    const { name, checked } = e.target;
+
+    // Update state of individual checkbox
+    setIndividualCheckboxes((prevCheckboxes) => ({
+      ...prevCheckboxes,
+      [name]: checked,
+    }));
   };
 
   return (
@@ -250,6 +289,7 @@ function AddUser() {
                   <Select.Option value="Admin">Admin</Select.Option>
                 </Select>
               </Form.Item>
+
               {/* Checkbox For permission */}
               <div
                 style={{
@@ -260,7 +300,7 @@ function AddUser() {
                 className="btn-span"
               >
                 <h6 className="me-3">User Permission:</h6>
-                <Checkbox onChange={onChange}>Select All</Checkbox>
+                <Checkbox onChange={handleCheckboxChange}>Select All</Checkbox>
               </div>
               <div
                 style={{
@@ -270,14 +310,45 @@ function AddUser() {
                 }}
                 className="btn-span"
               >
-                <Checkbox onChange={onChange}>MainDashboard</Checkbox>
-                <Checkbox onChange={onChange}>PaymentTracking</Checkbox>
-                <Checkbox onChange={onChange}>Payment</Checkbox>
-                <Checkbox onChange={onChange}>Token</Checkbox>
-                <Checkbox onChange={onChange}>Adduser</Checkbox>
+                {/* Inside your Form component, updateing the JSX for individual
+                checkboxes like this: */}
+                <Checkbox
+                  name="MainDashboard"
+                  checked={individualCheckboxes.MainDashboard}
+                  onChange={handleIndividualChange}
+                >
+                  MainDashboard
+                </Checkbox>
+                <Checkbox
+                  name="PaymentTracking"
+                  checked={individualCheckboxes.PaymentTracking}
+                  onChange={handleIndividualChange}
+                >
+                  PaymentTracking
+                </Checkbox>
+                <Checkbox
+                  name="Payment"
+                  checked={individualCheckboxes.Payment}
+                  onChange={handleIndividualChange}
+                >
+                  Payment
+                </Checkbox>
+                <Checkbox
+                  name="Token"
+                  checked={individualCheckboxes.Token}
+                  onChange={handleIndividualChange}
+                >
+                  Token
+                </Checkbox>
+                <Checkbox
+                  name="Adduser"
+                  checked={individualCheckboxes.Adduser}
+                  onChange={handleIndividualChange}
+                >
+                  Adduser
+                </Checkbox>
               </div>
 
-              
               {/* Buttons for cancel and save actions */}
               <div
                 style={{
@@ -339,7 +410,7 @@ function AddUser() {
         </div>
         <hr></hr>
       </div>
-      <Table className="table-Adduser" columns={columns} dataSource={data}/>
+      <Table className="table-Adduser" columns={columns} dataSource={data} />
     </div>
   );
 }

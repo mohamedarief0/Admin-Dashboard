@@ -21,10 +21,8 @@ const { Header, Sider, Content } = Layout;
 const SideBar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("/dashboard"); // State to keep track of the selected menu item
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
-  const navigation = useNavigate(); // Use useNavigate hook to get the navigation function
+  const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
+
 
   // Function to handle menu item click
   const handleMenuClick = ({ key }) => {

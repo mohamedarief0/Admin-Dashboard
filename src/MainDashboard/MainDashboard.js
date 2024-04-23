@@ -432,94 +432,28 @@ function MainDashboard() {
   });
   //State for range picker value
   const [rangeValue, setRangeValue] = useState([]);
+  const [totalIncomeData, setTotalIncomeData] = useState([]);
 
   // Range picker change handler
   const onRangePickerChange = (value, dateString) => {
     console.log("Selected Range: ", dateString);
     setRangeValue(value);
+    // Fetch data for Total income based on selected date range
+    fetchData(dateString);
   };
 
-// demo purpose UseEffect and the content DEMO DEMO
-// demo purpose UseEffect and the content DEMO DEMO
-// demo purpose UseEffect and the content DEMO DEMO
-  useEffect(() => {
-    // Fetch data for the selected date range
-    // Here, you need to fetch data from your backend or any other source
-    // For demonstration purposes, I'm updating totalIncome with dummy data
-
-    setTotalIncome({
-      series: [
-        {
-          name: "This Week",
-          data: [20, 25, 30, 35, 28, 30, 32], // Dummy data for the selected date range
-        },
-        {
-          name: "Last week",
-          data: [10, 15, 20, 25, 18, 20, 22], // Dummy data for the selected date range
-        },
-      ],
-      options: {
-        // Options for Total Income Line Chart options: {
-        chart: {
-          height: 350,
-          type: "line",
-          dropShadow: {
-            enabled: true,
-            color: "#000",
-            top: 10,
-            left: 7,
-            blur: 10,
-            opacity: 0.2,
-          },
-          toolbar: {
-            show: false,
-          },
-        },
-        colors: ["#007BFE", "#05DFAD"],
-        dataLabels: {
-          // enabled: true, // showin number in the line
-        },
-        stroke: {
-          curve: "smooth",
-        },
-        title: {
-          text: "Total Income",
-          align: "left",
-        },
-        grid: {
-          // borderColor: " ", //this box chart box
-          row: {
-            colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
-            opacity: 0.5,
-          },
-        },
-        markers: {
-          size: 2,
-        },
-        xaxis: {
-          categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-          title: {
-            text: "Month",
-          },
-        },
-        yaxis: {
-          title: {
-            // text: "Temperature",
-          },
-          min: 5,
-          max: 40,
-        },
-        legend: {
-          position: "top",
-          horizontalAlign: "right",
-          floating: true,
-          offsetY: -25,
-          offsetX: -5,
-        },
-      },
-    });
-  }, [rangeValue]);
-
+  const fetchData = async (dateString) => {
+    // Your API call or data fetching logic here
+    // Example:
+    // const response = await fetch(`your-api-url?start_date=${dateString[0]}&end_date=${dateString[1]}`);
+    // const data = await response.json();
+    // setTotalIncomeData(data);
+    // For now, setting dummy data
+    setTotalIncomeData([
+      { name: "This Week", data: [28, 29, 33, 36, 32, 32, 33] },
+      { name: "Last week", data: [12, 11, 14, 18, 17, 13, 13] }
+    ]);
+  };
   return (
     <>
       {/* Heading title  */}
