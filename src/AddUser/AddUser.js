@@ -23,7 +23,9 @@ function AddUser() {
     Payment: false,
     Token: false,
     Adduser: false,
-  }); // State for user setfiled values of checkbox
+  });
+  // State for user setfiled values of checkbox
+  const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
 
   // Custom function to normalize uploaded file data
   const normFile = (e) => {
@@ -38,12 +40,20 @@ function AddUser() {
     setUserData(allValues); // Update user data state with all form values
   };
 
-  // Define handleCancel function
   const handleCancel = () => {
     // Clear file list, reset form fields, and clear user data state
     setFileList([]);
     form.resetFields();
     setUserData([]);
+    setIndividualCheckboxes({
+      MainDashboard: false,
+      PaymentTracking: false,
+      Payment: false,
+      Token: false,
+      Adduser: false,
+    });
+    // Uncheck the "Select All" checkbox
+    setSelectAllCheckbox(false);
   };
 
   // Event handler for file upload change
@@ -60,7 +70,7 @@ function AddUser() {
       .validateFields()
       .then((values) => {
         const userId = values.userId;
-        
+
         // Extract checkbox values
         const permission = Object.keys(individualCheckboxes).filter(
           (key) => individualCheckboxes[key]
@@ -70,7 +80,6 @@ function AddUser() {
         const userDataWithPermissions = {
           ...values,
           permission,
-        
         };
         // If validation successful, add the form values to the user data array
         let newData;
@@ -85,6 +94,42 @@ function AddUser() {
       .catch((errorInfo) => {
         console.log("Validation Failed:", errorInfo); // Log validation errors to console
       });
+  };
+
+  // Custom function to handle checkbox change
+  const handleCheckboxChange = (e) => {
+    const { checked } = e.target;
+    // Update state of individual checkboxes based on "Select All" checkbox
+    if (checked) {
+      setIndividualCheckboxes({
+        MainDashboard: true,
+        PaymentTracking: true,
+        Payment: true,
+        Token: true,
+        Adduser: true,
+      });
+    } else {
+      setIndividualCheckboxes({
+        MainDashboard: false,
+        PaymentTracking: false,
+        Payment: false,
+        Token: false,
+        Adduser: false,
+      });
+    }
+    // Update state of "Select All" checkbox
+    setSelectAllCheckbox(checked);
+  };
+
+  // Custom function to handle individual checkbox change
+  const handleIndividualChange = (e) => {
+    const { name, checked } = e.target;
+
+    // Update state of individual checkbox
+    setIndividualCheckboxes((prevCheckboxes) => ({
+      ...prevCheckboxes,
+      [name]: checked,
+    }));
   };
 
   // Table Data
@@ -178,31 +223,6 @@ function AddUser() {
       status: "close",
     },
   ];
-
-  // Custom function to handle checkbox change
-  const handleCheckboxChange = (e) => {
-    const { checked } = e.target;
-
-    // Update state of individual checkboxes based on "Select All" checkbox
-    setIndividualCheckboxes({
-      MainDashboard: checked,
-      PaymentTracking: checked,
-      Payment: checked,
-      Token: checked,
-      Adduser: checked,
-    });
-  };
-
-  // Custom function to handle individual checkbox change
-  const handleIndividualChange = (e) => {
-    const { name, checked } = e.target;
-
-    // Update state of individual checkbox
-    setIndividualCheckboxes((prevCheckboxes) => ({
-      ...prevCheckboxes,
-      [name]: checked,
-    }));
-  };
 
   return (
     <div>
@@ -300,7 +320,12 @@ function AddUser() {
                 className="btn-span"
               >
                 <h6 className="me-3">User Permission:</h6>
-                <Checkbox onChange={handleCheckboxChange}>Select All</Checkbox>
+                <Checkbox
+                  onChange={handleCheckboxChange}
+                  checked={selectAllCheckbox}
+                >
+                  Select All
+                </Checkbox>
               </div>
               <div
                 style={{

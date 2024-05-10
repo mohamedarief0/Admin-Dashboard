@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 // import CombineForm from "./combineForm/CombineForm";
 // import DashBoard from "./DashBoard/DashBoard";
-import DashBoard from "./SideBar";
+import DashBoard from "./SideBar/Dashboard";
 import PageNotFound from "./PageNotFound/PageNotFount";
 import "bootstrap/dist/css/bootstrap.css";
 import LoginForm from "./LoginFormCloudGarage/LoginForm";
@@ -12,10 +12,14 @@ import ResetPassword from "./Fogot password/Reset/Reset";
 import BuyerUpload from "./Buyer-Upload";
 import Token from "./Token/Token";
 import AddUser from "./AddUser/AddUser";
+import MainDashboard from "./MainDashboard/MainDashboard";
+
 
 
 // onclick redirect
 export default function App() {
+
+  
   return (
       <Routes>
         {/* Cloud garage ticket website */}
@@ -24,10 +28,13 @@ export default function App() {
         <Route path="/otp" element={<InputOtp/>}/>
         <Route path="/resetPassword" element={<ResetPassword/>}/>
         <Route path="/dashboard" element={<DashBoard/>} />
+          {/* <Route path="main" element={<MainDashboard/>} /> */}
+        {/* <Route path="/dashboard/:id" element={<DashBoard />} /> */}
         {/* <Route path="/dashboard" element={<SideBar/>} /> */}
-        <Route path="/user" element={<AddUser/>} />
+        {/* <Route path="/user" element={<AddUser/>} />
         <Route path="/payment" element={<BuyerUpload/>} />
         <Route path="/token" element={<Token/>}/>
+        <Route path="/maindashboard" element={<MainDashboard/>}/> */}
         
         {/* NORMAL - Cloud garage Logins */}
         {/* <Route path="/" element={<CombineForm />} /> */}

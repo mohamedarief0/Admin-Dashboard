@@ -92,19 +92,34 @@ function BuyerUpload() {
   ];
 
   const totalAmountSum = data.reduce((acc, item) => acc + item.amount, 0);
+  const totalAmountSub = data.reduce((acc, item) => acc - item.amount, 0);
   const totalConvenienceFeeSum = data.reduce(
     (acc, item) => acc + item.convenienceFee,
     0
   );
-  const totalSum = totalAmountSum + totalConvenienceFeeSum; // Calculate the total sum of Amount and Convenience fee
+  const totalConvenienceFeeSub = data.reduce(
+    (acc, item) => acc - item.convenienceFee,
+    0
+  );
+  const totalSumBuyer = totalAmountSum + totalConvenienceFeeSum; // Calculate the total sum of Amount and Convenience fee to add
+  const totalSumUploder = totalAmountSub - totalConvenienceFeeSub; // Calculate the total sum of Amount and Convenience fee to subtract
 
-  const dataWithTotalRow = [
+  const dataWithTotalRowBuyer = [
     ...data,
     {
       key: "Total Amount",
       amount: totalAmountSum,
       convenienceFee: totalConvenienceFeeSum,
-      total: totalSum,
+      total: totalSumBuyer,
+    },
+  ];
+  const dataWithTotalRowUploder = [
+    ...data,
+    {
+      key: "Total Amount",
+      amount: totalAmountSub,
+      convenienceFee: totalConvenienceFeeSub,
+      total: totalSumUploder,
     },
   ];
 
@@ -114,12 +129,12 @@ function BuyerUpload() {
       <div className="buyer-section">
         <h3 className="payment-title">Payment</h3>
         <h6 className="payment-title">Buyer Payment</h6>
-        <Table columns={columns} dataSource={dataWithTotalRow} />
+        <Table columns={columns} dataSource={dataWithTotalRowBuyer} />
         <hr></hr>
       </div>
       <div className="uploder-section">
         <h6 className="payment-title">Uploader Payment</h6>
-        <Table columns={columns} dataSource={dataWithTotalRow} />
+        <Table columns={columns} dataSource={dataWithTotalRowUploder} />
       </div>
     </>
   );

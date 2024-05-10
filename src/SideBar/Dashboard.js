@@ -18,36 +18,39 @@ import PaymentTrackingIcon from "../Asset/payment_tracking.svg";
 
 const { Header, Sider, Content } = Layout;
 
-const SideBar = () => {
+const Dashboard = () => {
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("/dashboard"); // State to keep track of the selected menu item
-  const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
-
+  const [selectedKey, setSelectedKey] = useState("/dashboard/main"); // State to keep track of the selected menu item
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
 
   // Function to handle menu item click
   const handleMenuClick = ({ key }) => {
-    if (key === "/logout") {
+    if (key === "/dashboard/logout") {
       // If logout is clicked, perform logout action
       // Here you can add your logout logic, such as clearing tokens, etc.
       console.log("Performing logout action...");
     } else {
       // Otherwise, navigate to the clicked key
       setSelectedKey(key);
+      // navigate(key); // Navigate to the clicked route
     }
   };
 
   // Render content based on selected menu item
   const renderContent = () => {
     switch (selectedKey) {
-      case "/dashboard":
+      case "/dashboard/main":
         return <MainDashboard />;
-      case "/token":
+      case "/dashboard/token":
         return <Token />;
-      case "/payment":
+      case "/dashboard/payment":
         return <BuyerUpload />;
-      case "/user":
+      case "/dashboard/user":
         return <AddUser />;
-      case "/paymenttracking":
+      case "/dashboard/paymenttracking":
         return <PaymentTracking />;
       default:
         return null;
@@ -56,7 +59,9 @@ const SideBar = () => {
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <Header style={{ padding: 0, marginBottom:20, background: colorBgContainer }}>
+      <Header
+        style={{ padding: 0, marginBottom: 20, background: colorBgContainer }}
+      >
         <HeaderComponent /> {/* HeaderComponent */}
       </Header>
       <Layout>
@@ -85,7 +90,7 @@ const SideBar = () => {
             style={{ height: "100%", borderRight: 0 }}
             items={[
               {
-                key: "/dashboard",
+                key: "/dashboard/main",
                 icon: (
                   <img
                     src={DashboardMonitorIcon}
@@ -97,7 +102,7 @@ const SideBar = () => {
                 label: "Main Dashboard",
               },
               {
-                key: "/token",
+                key: "/dashboard/token",
                 icon: (
                   <img
                     src={TicketIcon}
@@ -107,8 +112,9 @@ const SideBar = () => {
                   />
                 ), // Use the imported SVG icon
                 label: "Token's",
-              },{
-                key: "/paymenttracking",
+              },
+              {
+                key: "/dashboard/paymenttracking",
                 icon: (
                   <img
                     src={PaymentTrackingIcon}
@@ -120,7 +126,7 @@ const SideBar = () => {
                 label: "Payment tracking",
               },
               {
-                key: "/payment",
+                key: "/dashboard/payment",
                 icon: (
                   <img
                     src={RupeeIcon}
@@ -132,7 +138,7 @@ const SideBar = () => {
                 label: "Payment",
               },
               {
-                key: "/user",
+                key: "/dashboard/user",
                 icon: (
                   <img
                     src={AddUserIcon}
@@ -144,14 +150,21 @@ const SideBar = () => {
                 label: "User's",
               },
               {
-                key: "/logout",
+                key: "/dashboard/logout",
                 icon: <img src={""} alt="logoutIcon" />, // Use the imported SVG icon
                 icon: <LogoutOutlined />,
                 label: "Logout",
                 danger: true,
               },
             ]}
-          />
+          >
+            {/* <Menu.Item key="/dashboard/main">Dashboard</Menu.Item>
+            <Menu.Item key="/dashboard/token">Token</Menu.Item>
+            <Menu.Item key="/dashboard/paymenttracking">Payment Tracking</Menu.Item>
+            <Menu.Item key="/dashboard/payment">Token</Menu.Item>
+            <Menu.Item key="/dashboard/user">Add User</Menu.Item>
+            <Menu.Item key="/dashboard/logout">Logout</Menu.Item> */}
+          </Menu>
         </Sider>
         <Layout>
           <Content
@@ -172,4 +185,4 @@ const SideBar = () => {
   );
 };
 
-export default SideBar;
+export default Dashboard;
