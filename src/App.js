@@ -1,47 +1,28 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-// import CombineForm from "./combineForm/CombineForm";
-// import DashBoard from "./DashBoard/DashBoard";
-import DashBoard from "./SideBar/Dashboard";
+import Dashboard from "./SideBar/Dashboard";
 import PageNotFound from "./PageNotFound/PageNotFount";
-import "bootstrap/dist/css/bootstrap.css";
 import LoginForm from "./LoginFormCloudGarage/LoginForm";
 import MailValidation from "./Fogot password/Mailvalidation/MailValidation";
-import InputOtp from "./Fogot password/InputOtp";
+import InputOtp from "./Fogot password/InputOtp/InputOtp";
 import ResetPassword from "./Fogot password/Reset/Reset";
-import BuyerUpload from "./Buyer-Upload";
-import Token from "./Token/Token";
-import AddUser from "./AddUser/AddUser";
-import MainDashboard from "./MainDashboard/MainDashboard";
-
-
-
-// onclick redirect
-export default function App() {
-
-  
+import "bootstrap/dist/css/bootstrap.css";
+function App() {
   return (
-      <Routes>
-        {/* Cloud garage ticket website */}
-        <Route path="/" element={<LoginForm/>} />
-        <Route path="/mailvalidation" element={<MailValidation/>}/>
-        <Route path="/otp" element={<InputOtp/>}/>
-        <Route path="/resetPassword" element={<ResetPassword/>}/>
-        <Route path="/dashboard" element={<DashBoard/>} />
-          {/* <Route path="main" element={<MainDashboard/>} /> */}
-        {/* <Route path="/dashboard/:id" element={<DashBoard />} /> */}
-        {/* <Route path="/dashboard" element={<SideBar/>} /> */}
-        {/* <Route path="/user" element={<AddUser/>} />
-        <Route path="/payment" element={<BuyerUpload/>} />
-        <Route path="/token" element={<Token/>}/>
-        <Route path="/maindashboard" element={<MainDashboard/>}/> */}
-        
-        {/* NORMAL - Cloud garage Logins */}
-        {/* <Route path="/" element={<CombineForm />} /> */}
+    <Routes>
+      {/* Routes for login and password reset */}
+      <Route path="/" element={<LoginForm />} />
+      <Route path="/mailvalidation" element={<MailValidation />} />
+      <Route path="/otp" element={<InputOtp />} />
+      <Route path="/resetPassword" element={<ResetPassword />} />
 
+      {/* Route for Dashboard */}
+      <Route path="/dashboard/:id" element={<Dashboard />}/>
 
-        {/* Page 404 Error  */}
-        <Route path="*" element={<PageNotFound/>} />
-      </Routes>
+      {/* Route for 404 Page Not Found */}
+      <Route path="*" element={<PageNotFound />} />
+    </Routes>
   );
 }
+
+export default App;

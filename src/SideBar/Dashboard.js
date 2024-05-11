@@ -29,15 +29,13 @@ const Dashboard = () => {
   // Function to handle menu item click
   const handleMenuClick = ({ key }) => {
     if (key === "/dashboard/logout") {
-      // If logout is clicked, perform logout action
-      // Here you can add your logout logic, such as clearing tokens, etc.
       console.log("Performing logout action...");
     } else {
-      // Otherwise, navigate to the clicked key
       setSelectedKey(key);
-      // navigate(key); // Navigate to the clicked route
+      navigate(key); // Navigate to the clicked route
     }
   };
+  
 
   // Render content based on selected menu item
   const renderContent = () => {
@@ -85,85 +83,63 @@ const Dashboard = () => {
           <Menu
             onClick={handleMenuClick}
             mode="inline"
-            defaultSelectedKeys={["/dashboard"]}
+            defaultSelectedKeys={["/dashboard/main"]}
             selectedKeys={[selectedKey]}
             style={{ height: "100%", borderRight: 0 }}
-            items={[
-              {
-                key: "/dashboard/main",
-                icon: (
-                  <img
-                    src={DashboardMonitorIcon}
-                    width={18}
-                    height={18}
-                    alt="DashboardIcon"
-                  />
-                ), // Use the imported SVG icon
-                label: "Main Dashboard",
-              },
-              {
-                key: "/dashboard/token",
-                icon: (
-                  <img
-                    src={TicketIcon}
-                    width={18}
-                    height={18}
-                    alt="ticketIcon"
-                  />
-                ), // Use the imported SVG icon
-                label: "Token's",
-              },
-              {
-                key: "/dashboard/paymenttracking",
-                icon: (
-                  <img
-                    src={PaymentTrackingIcon}
-                    width={18}
-                    height={18}
-                    alt="PaymentIcon"
-                  />
-                ), // Use the imported SVG icon
-                label: "Payment tracking",
-              },
-              {
-                key: "/dashboard/payment",
-                icon: (
-                  <img
-                    src={RupeeIcon}
-                    width={18}
-                    height={18}
-                    alt="PaymentIcon"
-                  />
-                ), // Use the imported SVG icon
-                label: "Payment",
-              },
-              {
-                key: "/dashboard/user",
-                icon: (
-                  <img
-                    src={AddUserIcon}
-                    width={18}
-                    height={18}
-                    alt="userIcon"
-                  />
-                ), // Use the imported SVG icon
-                label: "User's",
-              },
-              {
-                key: "/dashboard/logout",
-                icon: <img src={""} alt="logoutIcon" />, // Use the imported SVG icon
-                icon: <LogoutOutlined />,
-                label: "Logout",
-                danger: true,
-              },
-            ]}
           >
-            {/* <Menu.Item key="/dashboard/main">Dashboard</Menu.Item>
-            <Menu.Item key="/dashboard/token">Token</Menu.Item>
-            <Menu.Item key="/dashboard/paymenttracking">Payment Tracking</Menu.Item>
-            <Menu.Item key="/dashboard/payment">Token</Menu.Item>
-            <Menu.Item key="/dashboard/user">Add User</Menu.Item>
-            <Menu.Item key="/dashboard/logout">Logout</Menu.Item> */}
+            <Menu.Item
+              key="/dashboard/main"
+              icon={
+                <img
+                  src={DashboardMonitorIcon}
+                  width={18}
+                  height={18}
+                  alt="DashboardIcon"
+                />
+              }
+            >
+              Main Dashboard
+            </Menu.Item>
+            <Menu.Item
+              key="/dashboard/token"
+              icon={
+                <img src={TicketIcon} width={18} height={18} alt="ticketIcon" />
+              }
+            >
+              Token's
+            </Menu.Item>
+            <Menu.Item
+              key="/dashboard/paymenttracking"
+              icon={
+                <img
+                  src={PaymentTrackingIcon}
+                  width={18}
+                  height={18}
+                  alt="PaymentIcon"
+                />
+              }
+            >
+              Payment tracking
+            </Menu.Item>
+            <Menu.Item
+              key="/dashboard/payment"
+              icon={
+                <img src={RupeeIcon} width={18} height={18} alt="PaymentIcon" />
+              }
+            >
+              Payment
+            </Menu.Item>
+            <Menu.Item
+              key="/dashboard/user"
+              icon={
+                <img src={AddUserIcon} width={18} height={18} alt="userIcon" />
+              }
+            >
+              User's
+            </Menu.Item>
+            <Menu.Item key="/dashboard/logout" icon={<LogoutOutlined />} danger>
+              Logout
+            </Menu.Item>
           </Menu>
         </Sider>
         <Layout>
@@ -172,8 +148,6 @@ const Dashboard = () => {
               marginLeft: "206px",
               padding: 24,
               minHeight: 280,
-              // background: colorBgContainer,
-              // borderRadius: borderRadiusLG,
               overflow: "auto",
             }}
           >

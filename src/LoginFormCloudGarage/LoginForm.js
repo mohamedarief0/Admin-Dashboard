@@ -8,7 +8,7 @@ function LoginForm() {
   const navigate = useNavigate();
 
   const handleSubmitted = () => {
-    navigate("/dashboard");
+    navigate("/dashboard/main");
   };
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
