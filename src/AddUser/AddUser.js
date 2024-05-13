@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PlusOutlined, EditTwoTone, DeleteTwoTone } from "@ant-design/icons";
 import {
   Button,
@@ -9,8 +9,11 @@ import {
   Space,
   Table,
   Checkbox,
+  message,
 } from "antd";
 import "./AddUser.css";
+import db from "../firebase";
+import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 
 function AddUser() {
   // Define state variables for form, file list, and user data
@@ -33,6 +36,16 @@ function AddUser() {
       return e;
     }
     return e && e.fileList;
+  };
+
+  const addUserToFirestore = async (userData) => {
+    try {
+      // Add user data to the "Adminusers" collection in Firestore
+      const docRef = await addDoc(collection(db, "Adminusers"), userData);
+      console.log("User data added to Firestore with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding user data to Firestore: ", error);
+    }
   };
 
   // Define handleFormChange function
@@ -64,37 +77,95 @@ function AddUser() {
   }
 
   // Event handler for saving user data
-  const handleSave = () => {
-    // Validate the form fields
-    form
-      .validateFields()
-      .then((values) => {
-        const userId = values.userId;
-
-        // Extract checkbox values
-        const permission = Object.keys(individualCheckboxes).filter(
-          (key) => individualCheckboxes[key]
-        );
-
-        // merge checkbox values with other form values
-        const userDataWithPermissions = {
-          ...values,
-          permission,
-        };
-        // If validation successful, add the form values to the user data array
-        let newData;
-        if (!Array.isArray(userData)) {
-          newData = [userDataWithPermissions];
-        } else {
-          newData = [...userData, userDataWithPermissions];
-        }
-        setUserData(newData); // Update user data state
-        console.log("User Data:", newData); // Log the user data to console
-      })
-      .catch((errorInfo) => {
-        console.log("Validation Failed:", errorInfo); // Log validation errors to console
-      });
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      const email = values.email;
+      const phoneNo = values.phoneNo;
+  
+      // Check if a user with the same email or phone number already exists in the database
+      const userSnapshot = await getDocs(
+        query(
+          collection(db, "Adminusers"),
+          where("email", "==", email),
+        )
+      );
+  
+      const phoneNoSnapshot = await getDocs(
+        query(
+          collection(db, "Adminusers"),
+          where("phoneNo", "==", phoneNo),
+        )
+      );
+  
+      // Check if a user with the same email and phone number already exists
+      const bothExist = !userSnapshot.empty && !phoneNoSnapshot.empty;
+      const emailExists = !phoneNoSnapshot.empty;
+      const phoneNoExists = !userSnapshot.empty;
+  
+      // If a user with the same email or phone number already exists, display a warning message
+      if (bothExist) {
+        message.warning("A user with the same email and phone number already exists.");
+        return;
+      } else if (emailExists) {
+        message.warning("A user with the same phone number already exists.");
+        return;
+      } else if (phoneNoExists) {
+        message.warning("A user with the same email already exists.");
+        return;
+      }
+  
+      // If the user is added successfully, display a success message
+      message.success("User added successfully!");
+  
+      // Merge checkbox values with other form values
+      const permission = Object.keys(individualCheckboxes).filter(
+        (key) => individualCheckboxes[key]
+      );
+  
+      // Get the current date
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const month = monthNames[currentDate.getMonth()];
+      const year = currentDate.getFullYear();
+  
+      // Add user data to Firestore
+      const userDataWithPermissions = {
+        ...values,
+        date: `${month}/${day}/${year}`, // Add current date to user data
+        permission,
+      };
+      await addUserToFirestore(userDataWithPermissions);
+  
+      // If validation successful and user does not already exist, proceed to add the user
+      let newData;
+      if (!Array.isArray(userData)) {
+        newData = [userDataWithPermissions];
+      } else {
+        newData = [...userData, userDataWithPermissions];
+      }
+      setUserData(newData); // Update user data state
+      console.log("User Data:", newData); // Log the user data to console
+    } catch (error) {
+      console.error("Error adding user:", error);
+      message.error("Failed to add user. Please try again.");
+    }
   };
+  
 
   // Custom function to handle checkbox change
   const handleCheckboxChange = (e) => {
@@ -125,11 +196,24 @@ function AddUser() {
   const handleIndividualChange = (e) => {
     const { name, checked } = e.target;
 
+    // Check if the checkbox state is already updated, and return early if it is
+    if (individualCheckboxes[name] === checked) {
+      return;
+    }
+
     // Update state of individual checkbox
     setIndividualCheckboxes((prevCheckboxes) => ({
       ...prevCheckboxes,
       [name]: checked,
     }));
+
+    // Update state of "Select All" checkbox based on the state of individual checkboxes
+    const allChecked = Object.values({
+      ...individualCheckboxes,
+      [name]: checked, // Update the individual checkbox state
+    }).every((checkbox) => checkbox);
+
+    setSelectAllCheckbox(allChecked);
   };
 
   // Table Data
@@ -223,7 +307,7 @@ function AddUser() {
       status: "close",
     },
   ];
-
+  console.log(userData);
   return (
     <div>
       <div className="AddUser-section">
@@ -240,7 +324,7 @@ function AddUser() {
             <div className="grid-container">
               {/* Form fields for user data */}
               <Form.Item
-                name="userId"
+                name="key"
                 rules={[
                   { required: true, message: "Please input User ID!" },
                   {
