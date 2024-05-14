@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { PlusOutlined, EditTwoTone, DeleteTwoTone } from "@ant-design/icons";
 import {
   Button,
@@ -13,13 +13,20 @@ import {
 } from "antd";
 import "./AddUser.css";
 import db from "../firebase";
-import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 
 function AddUser() {
-  // Define state variables for form, file list, and user data
-  const [form] = Form.useForm(); // Initialize form instance
-  const [fileList, setFileList] = useState([]); // State for uploaded file list
-  const [userData, setUserData] = useState([]); // State for user data array
+  const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
+  const [userData, setUserData] = useState({
+    key: "",
+    name: "",
+    email: "",
+    password: "",
+    phoneNo: "",
+    role: "",
+    permission: [],
+  });
   const [individualCheckboxes, setIndividualCheckboxes] = useState({
     MainDashboard: false,
     PaymentTracking: false,
@@ -27,10 +34,8 @@ function AddUser() {
     Token: false,
     Adduser: false,
   });
-  // State for user setfiled values of checkbox
   const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
 
-  // Custom function to normalize uploaded file data
   const normFile = (e) => {
     if (Array.isArray(e)) {
       return e;
@@ -40,24 +45,34 @@ function AddUser() {
 
   const addUserToFirestore = async (userData) => {
     try {
-      // Add user data to the "Adminusers" collection in Firestore
       const docRef = await addDoc(collection(db, "Adminusers"), userData);
       console.log("User data added to Firestore with ID: ", docRef.id);
+      message.success("User added successfully!");
     } catch (error) {
       console.error("Error adding user data to Firestore: ", error);
+      message.error("Failed to add user. Please try again.");
     }
   };
 
-  // Define handleFormChange function
   const handleFormChange = (changedValues, allValues) => {
-    setUserData(allValues); // Update user data state with all form values
+    setUserData((prevUserData) => ({
+      ...prevUserData,
+      ...allValues,
+    }));
   };
 
   const handleCancel = () => {
-    // Clear file list, reset form fields, and clear user data state
     setFileList([]);
     form.resetFields();
-    setUserData([]);
+    setUserData({
+      key: "",
+      name: "",
+      email: "",
+      password: "",
+      phoneNo: "",
+      role: "",
+      permission: [],
+    });
     setIndividualCheckboxes({
       MainDashboard: false,
       PaymentTracking: false,
@@ -65,65 +80,27 @@ function AddUser() {
       Token: false,
       Adduser: false,
     });
-    // Uncheck the "Select All" checkbox
     setSelectAllCheckbox(false);
   };
 
-  // Event handler for file upload change
   function handleChange(info) {
     let fileList = [...info.fileList];
     fileList = fileList.slice(-1);
     setFileList(fileList);
   }
 
-  // Event handler for saving user data
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
       const email = values.email;
       const phoneNo = values.phoneNo;
-  
-      // Check if a user with the same email or phone number already exists in the database
-      const userSnapshot = await getDocs(
-        query(
-          collection(db, "Adminusers"),
-          where("email", "==", email),
-        )
-      );
-  
-      const phoneNoSnapshot = await getDocs(
-        query(
-          collection(db, "Adminusers"),
-          where("phoneNo", "==", phoneNo),
-        )
-      );
-  
-      // Check if a user with the same email and phone number already exists
-      const bothExist = !userSnapshot.empty && !phoneNoSnapshot.empty;
-      const emailExists = !phoneNoSnapshot.empty;
-      const phoneNoExists = !userSnapshot.empty;
-  
-      // If a user with the same email or phone number already exists, display a warning message
-      if (bothExist) {
-        message.warning("A user with the same email and phone number already exists.");
-        return;
-      } else if (emailExists) {
-        message.warning("A user with the same phone number already exists.");
-        return;
-      } else if (phoneNoExists) {
-        message.warning("A user with the same email already exists.");
-        return;
-      }
-  
-      // If the user is added successfully, display a success message
-      message.success("User added successfully!");
-  
-      // Merge checkbox values with other form values
+
+      // Perform your validation here
+
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
       );
-  
-      // Get the current date
+
       const currentDate = new Date();
       const day = currentDate.getDate();
       const monthNames = [
@@ -142,35 +119,30 @@ function AddUser() {
       ];
       const month = monthNames[currentDate.getMonth()];
       const year = currentDate.getFullYear();
-  
-      // Add user data to Firestore
+
       const userDataWithPermissions = {
         ...values,
-        date: `${month}/${day}/${year}`, // Add current date to user data
-        permission,
+        key: userData.key || "", // Use existing key if available
+        date: `${month}/${day}/${year}`,
+        permission: permission,
+        status: "Open", // Assuming status is initially "Open" for new users
       };
+
       await addUserToFirestore(userDataWithPermissions);
-  
-      // If validation successful and user does not already exist, proceed to add the user
-      let newData;
-      if (!Array.isArray(userData)) {
-        newData = [userDataWithPermissions];
-      } else {
-        newData = [...userData, userDataWithPermissions];
-      }
-      setUserData(newData); // Update user data state
-      console.log("User Data:", newData); // Log the user data to console
+
+      setUserData((prevUserData) => ({
+        ...prevUserData,
+        ...userDataWithPermissions,
+      }));
     } catch (error) {
       console.error("Error adding user:", error);
       message.error("Failed to add user. Please try again.");
     }
   };
-  
 
-  // Custom function to handle checkbox change
   const handleCheckboxChange = (e) => {
     const { checked } = e.target;
-    // Update state of individual checkboxes based on "Select All" checkbox
+
     if (checked) {
       setIndividualCheckboxes({
         MainDashboard: true,
@@ -188,35 +160,29 @@ function AddUser() {
         Adduser: false,
       });
     }
-    // Update state of "Select All" checkbox
     setSelectAllCheckbox(checked);
   };
 
-  // Custom function to handle individual checkbox change
   const handleIndividualChange = (e) => {
     const { name, checked } = e.target;
 
-    // Check if the checkbox state is already updated, and return early if it is
     if (individualCheckboxes[name] === checked) {
       return;
     }
 
-    // Update state of individual checkbox
     setIndividualCheckboxes((prevCheckboxes) => ({
       ...prevCheckboxes,
       [name]: checked,
     }));
 
-    // Update state of "Select All" checkbox based on the state of individual checkboxes
     const allChecked = Object.values({
       ...individualCheckboxes,
-      [name]: checked, // Update the individual checkbox state
+      [name]: checked,
     }).every((checkbox) => checkbox);
 
     setSelectAllCheckbox(allChecked);
   };
 
-  // Table Data
   const columns = [
     {
       title: "ID",
@@ -240,8 +206,8 @@ function AddUser() {
     },
     {
       title: "Phone No",
-      dataIndex: "phone",
-      key: "phone",
+      dataIndex: "phoneNo",
+      key: "phoneNo",
     },
     {
       title: "Role",
@@ -263,7 +229,6 @@ function AddUser() {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          {/* <a>Edit {record.name}</a> */}
           <a>
             <EditTwoTone />
           </a>
@@ -275,13 +240,14 @@ function AddUser() {
     },
   ];
 
+  // sample data
   const data = [
     {
       key: "001",
       date: "10/3/2024",
       name: "Ajith",
       email: "ajith@gmial.com",
-      phone: 9654715781,
+      phoneNo: 9654715781,
       role: "Super Admin",
       permission: "All",
       status: "Open",
@@ -291,7 +257,7 @@ function AddUser() {
       date: "10/3/2024",
       name: "Vijay",
       email: "vijayjoseph@gmial.com",
-      phone: 9657841084,
+      phoneNo: 9657841084,
       role: "Super Admin",
       permission: "All",
       status: "Close",
@@ -301,28 +267,26 @@ function AddUser() {
       date: "10/3/2024",
       name: "Simbu",
       email: "simbustr@gmial.com",
-      phone: 99457812365,
+      phoneNo: 99457812365,
       role: "Admin",
       permission: "Token",
       status: "close",
     },
   ];
-  console.log(userData);
+
   return (
     <div>
       <div className="AddUser-section">
         <h3 className="payment-title">Add user</h3>
         <div className="AddUser-bg-color">
-          {/* Form component */}
           <Form
             form={form}
             name="horizontal_login"
             layout="vertical"
             className="grid-containers"
-            onValuesChange={handleFormChange} // Event listener for form field change
+            onValuesChange={handleFormChange}
           >
             <div className="grid-container">
-              {/* Form fields for user data */}
               <Form.Item
                 name="key"
                 rules={[
@@ -394,12 +358,10 @@ function AddUser() {
                 </Select>
               </Form.Item>
 
-              {/* Checkbox For permission */}
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  // justifyContent: "space-between",
                 }}
                 className="btn-span"
               >
@@ -415,12 +377,9 @@ function AddUser() {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  // justifyContent: "space-between",
                 }}
                 className="btn-span"
               >
-                {/* Inside your Form component, updateing the JSX for individual
-                checkboxes like this: */}
                 <Checkbox
                   name="MainDashboard"
                   checked={individualCheckboxes.MainDashboard}
@@ -458,7 +417,6 @@ function AddUser() {
                 </Checkbox>
               </div>
 
-              {/* Buttons for cancel and save actions */}
               <div
                 style={{
                   display: "flex",
@@ -472,7 +430,7 @@ function AddUser() {
                     size="large"
                     style={{ width: 200 }}
                     type="default"
-                    onClick={handleCancel} // Event listener for cancel button click
+                    onClick={handleCancel}
                   >
                     Cancel
                   </Button>
@@ -482,7 +440,7 @@ function AddUser() {
                     size="large"
                     style={{ width: 200 }}
                     type="primary"
-                    onClick={handleSave} // Event listener for save button click
+                    onClick={handleSave}
                   >
                     Save
                   </Button>
@@ -490,7 +448,6 @@ function AddUser() {
               </div>
             </div>
 
-            {/* Upload component for image upload */}
             <Form.Item
               label={<h6>Upload image</h6>}
               valuePropName="fileList"
@@ -500,7 +457,7 @@ function AddUser() {
                 action="/upload.do"
                 listType="picture-card"
                 fileList={fileList}
-                onChange={handleChange} // Event listener for file upload change
+                onChange={handleChange}
                 maxCount={1}
                 style={{ width: 500, height: 500 }}
               >
@@ -519,7 +476,11 @@ function AddUser() {
         </div>
         <hr></hr>
       </div>
-      <Table className="table-Adduser" columns={columns} dataSource={data} />
+      <Table
+        className="table-Adduser"
+        columns={columns}
+        dataSource={data} // Pass userData as an array
+      />
     </div>
   );
 }
