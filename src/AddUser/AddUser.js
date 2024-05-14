@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlusOutlined, EditTwoTone, DeleteTwoTone } from "@ant-design/icons";
 import {
   Button,
@@ -13,7 +13,7 @@ import {
 } from "antd";
 import "./AddUser.css";
 import db from "../firebase";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 
 function AddUser() {
   const [form] = Form.useForm();
@@ -35,6 +35,7 @@ function AddUser() {
     Adduser: false,
   });
   const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
+  const [userList, setUserList] = useState([]); // each user from the data base to firebase
 
   const normFile = (e) => {
     if (Array.isArray(e)) {
@@ -43,16 +44,22 @@ function AddUser() {
     return e && e.fileList;
   };
 
-  const addUserToFirestore = async (userData) => {
-    try {
-      const docRef = await addDoc(collection(db, "Adminusers"), userData);
-      console.log("User data added to Firestore with ID: ", docRef.id);
-      message.success("User added successfully!");
-    } catch (error) {
-      console.error("Error adding user data to Firestore: ", error);
-      message.error("Failed to add user. Please try again.");
-    }
-  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "Adminusers"));
+        const users = [];
+        querySnapshot.forEach((doc) => {
+          users.push({ key: doc.id, ...doc.data() });
+        });
+        setUserList(users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        message.error("Failed to fetch users. Please try again.");
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleFormChange = (changedValues, allValues) => {
     setUserData((prevUserData) => ({
@@ -89,27 +96,44 @@ function AddUser() {
     setFileList(fileList);
   }
 
+  const addUserToFirestore = async (userData) => {
+    try {
+      const docRef = await addDoc(collection(db, "Adminusers"), userData);
+      console.log("User data added to Firestore with ID: ", docRef.id);
+      message.success("User added successfully!");
+    } catch (error) {
+      console.error("Error adding user data to Firestore: ", error);
+      message.error("Failed to add user. Please try again.");
+    }
+  };
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
+      const key = values.key;
       const email = values.email;
       const phoneNo = values.phoneNo;
 
       const userSnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("email", "==", email))
       );
-
+      const keySnapshot = await getDocs(
+        query(collection(db, "Adminusers"), where("key", "==", key))
+      );
       const phoneNoSnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("phoneNo", "==", phoneNo))
       );
 
       const emailExists = !userSnapshot.empty;
       const phoneNoExists = !phoneNoSnapshot.empty;
+      const keyExists = !keySnapshot.empty;
 
-      if (emailExists && phoneNoExists) {
+      if (emailExists && phoneNoExists && keyExists) {
         message.warning(
-          "A user with the same email and phone number already exists."
+          "A user with the same email or phone number or key already exists."
         );
+        return;
+      } else if (keyExists) {
+        message.warning("A user with the same key exists.");
         return;
       } else if (emailExists) {
         message.warning("A user with the same email already exists.");
@@ -120,7 +144,6 @@ function AddUser() {
       }
 
       // Validation passes, continue with user insertion
-
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
       );
@@ -514,7 +537,7 @@ function AddUser() {
       <Table
         className="table-Adduser"
         columns={columns}
-        dataSource={data} // Pass userData as an array
+        dataSource={userList} // Pass userData as an array
       />
     </div>
   );
