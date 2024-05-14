@@ -13,7 +13,7 @@ import {
 } from "antd";
 import "./AddUser.css";
 import db from "../firebase";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 
 function AddUser() {
   const [form] = Form.useForm();
@@ -95,7 +95,31 @@ function AddUser() {
       const email = values.email;
       const phoneNo = values.phoneNo;
 
-      // Perform your validation here
+      const userSnapshot = await getDocs(
+        query(collection(db, "Adminusers"), where("email", "==", email))
+      );
+
+      const phoneNoSnapshot = await getDocs(
+        query(collection(db, "Adminusers"), where("phoneNo", "==", phoneNo))
+      );
+
+      const emailExists = !userSnapshot.empty;
+      const phoneNoExists = !phoneNoSnapshot.empty;
+
+      if (emailExists && phoneNoExists) {
+        message.warning(
+          "A user with the same email and phone number already exists."
+        );
+        return;
+      } else if (emailExists) {
+        message.warning("A user with the same email already exists.");
+        return;
+      } else if (phoneNoExists) {
+        message.warning("A user with the same phone number already exists.");
+        return;
+      }
+
+      // Validation passes, continue with user insertion
 
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
@@ -134,6 +158,17 @@ function AddUser() {
         ...prevUserData,
         ...userDataWithPermissions,
       }));
+
+      // Reset form fields and checkboxes after successful insertion
+      form.resetFields();
+      setIndividualCheckboxes({
+        MainDashboard: false,
+        PaymentTracking: false,
+        Payment: false,
+        Token: false,
+        Adduser: false,
+      });
+      setSelectAllCheckbox(false);
     } catch (error) {
       console.error("Error adding user:", error);
       message.error("Failed to add user. Please try again.");
