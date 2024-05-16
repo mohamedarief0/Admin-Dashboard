@@ -10,16 +10,30 @@ import {
   Table,
   Checkbox,
   message,
+  Modal,
 } from "antd";
 import "./AddUser.css";
-import db from "../firebase";
-import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
+import { db } from "../firebase";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
 
 function AddUser() {
+  // In your AddUser.js file or wherever you're using `db`
+
+  // console.log(db);
+
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [userData, setUserData] = useState({
-    key: "",
+    userId: "",
     name: "",
     email: "",
     password: "",
@@ -36,7 +50,9 @@ function AddUser() {
   });
   const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
   const [userList, setUserList] = useState([]); // each user from the data base to firebase
-
+  const [editMode, setEditMode] = useState(false); // State to track edit mod
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const normFile = (e) => {
     if (Array.isArray(e)) {
       return e;
@@ -61,6 +77,17 @@ function AddUser() {
     fetchUsers();
   }, []);
 
+  const addUserToFirestore = async (userData) => {
+    try {
+      const docRef = await addDoc(collection(db, "Adminusers"), userData);
+      console.log("User data added to Firestore with ID: ", docRef.id);
+      message.success("User added successfully!");
+    } catch (error) {
+      console.error("Error adding user data to Firestore: ", error);
+      message.error("Failed to add user. Please try again.");
+    }
+  };
+
   const handleFormChange = (changedValues, allValues) => {
     setUserData((prevUserData) => ({
       ...prevUserData,
@@ -68,11 +95,17 @@ function AddUser() {
     }));
   };
 
+  function handleChange(info) {
+    let fileList = [...info.fileList];
+    fileList = fileList.slice(-1);
+    setFileList(fileList);
+  }
+
   const handleCancel = () => {
     setFileList([]);
     form.resetFields();
     setUserData({
-      key: "",
+      userId: "",
       name: "",
       email: "",
       password: "",
@@ -90,38 +123,28 @@ function AddUser() {
     setSelectAllCheckbox(false);
   };
 
-  function handleChange(info) {
-    let fileList = [...info.fileList];
-    fileList = fileList.slice(-1);
-    setFileList(fileList);
-  }
-
-  const addUserToFirestore = async (userData) => {
-    try {
-      const docRef = await addDoc(collection(db, "Adminusers"), userData);
-      console.log("User data added to Firestore with ID: ", docRef.id);
-      message.success("User added successfully!");
-    } catch (error) {
-      console.error("Error adding user data to Firestore: ", error);
-      message.error("Failed to add user. Please try again.");
-    }
-  };
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
-      const key = values.key;
+      const userId = values.userId;
       const email = values.email;
       const phoneNo = values.phoneNo;
+      console.log(userId);
 
       const userSnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("email", "==", email))
       );
       const keySnapshot = await getDocs(
-        query(collection(db, "Adminusers"), where("key", "==", key))
+        query(collection(db, "Adminusers"), where("key", "==", userId))
       );
       const phoneNoSnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("phoneNo", "==", phoneNo))
       );
+
+      if (!userId || !email || !phoneNo) {
+        message.error("Please fill in all required fields.");
+        return;
+      }
 
       const emailExists = !userSnapshot.empty;
       const phoneNoExists = !phoneNoSnapshot.empty;
@@ -143,7 +166,6 @@ function AddUser() {
         return;
       }
 
-      // Validation passes, continue with user insertion
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
       );
@@ -169,20 +191,23 @@ function AddUser() {
 
       const userDataWithPermissions = {
         ...values,
-        key: userData.key || "", // Use existing key if available
+        key: userData.userId || "",
         date: `${month}/${day}/${year}`,
         permission: permission,
-        status: "Open", // Assuming status is initially "Open" for new users
+        status: "Open",
       };
 
-      await addUserToFirestore(userDataWithPermissions);
+      if (editMode) {
+        await updateUserInFirestore(userDataWithPermissions);
+      } else {
+        await addUserToFirestore(userDataWithPermissions);
+      }
 
       setUserData((prevUserData) => ({
         ...prevUserData,
         ...userDataWithPermissions,
       }));
 
-      // Reset form fields and checkboxes after successful insertion
       form.resetFields();
       setIndividualCheckboxes({
         MainDashboard: false,
@@ -192,6 +217,7 @@ function AddUser() {
         Adduser: false,
       });
       setSelectAllCheckbox(false);
+      setEditMode(false);
     } catch (error) {
       console.error("Error adding user:", error);
       message.error("Failed to add user. Please try again.");
@@ -244,8 +270,8 @@ function AddUser() {
   const columns = [
     {
       title: "ID",
-      dataIndex: "key",
-      key: "key",
+      dataIndex: "userId",
+      key: "userId",
     },
     {
       title: "Date",
@@ -276,6 +302,7 @@ function AddUser() {
       title: "Permission",
       key: "permission",
       dataIndex: "permission",
+      render: (permissions) => permissions.join(", "),
     },
     {
       title: "Status",
@@ -287,51 +314,117 @@ function AddUser() {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <a>
+          <a onClick={() => handleEdit(record)}>
             <EditTwoTone />
           </a>
-          <a>
+          <a onClick={() => handleDelete(record)}>
             <DeleteTwoTone />
           </a>
         </Space>
       ),
     },
   ];
+  const updateUserInFirestore = async (userData) => {
+    try {
+      const userRef = doc(db, "Adminusers", userData.id);
+      await updateDoc(userRef, userData);
+      console.log("User data updated in Firestore");
+      message.success("User details updated successfully!");
+    } catch (error) {
+      console.error("Error updating user data in Firestore: ", error);
+      message.error("Failed to update user details. Please try again.");
+    }
+  };
+  // Inside the handleEdit function
+  const handleEdit = (record) => {
+    setUserData({ ...record });
+    const checkboxes = { ...individualCheckboxes };
+    record.permission.forEach((perm) => {
+      checkboxes[perm] = true;
+    });
+    setIndividualCheckboxes(checkboxes);
+    form.setFieldsValue(record);
+    setEditMode(true);
+  };
+  // Function to handle delete action
+  const handleDelete = (record) => {
+    setSelectedUser(record);
+    setDeleteModalVisible(true);
+  };
 
-  // sample data
-  const data = [
-    {
-      key: "001",
-      date: "10/3/2024",
-      name: "Ajith",
-      email: "ajith@gmial.com",
-      phoneNo: 9654715781,
-      role: "Super Admin",
-      permission: "All",
-      status: "Open",
-    },
-    {
-      key: "002",
-      date: "10/3/2024",
-      name: "Vijay",
-      email: "vijayjoseph@gmial.com",
-      phoneNo: 9657841084,
-      role: "Super Admin",
-      permission: "All",
-      status: "Close",
-    },
-    {
-      key: "003",
-      date: "10/3/2024",
-      name: "Simbu",
-      email: "simbustr@gmial.com",
-      phoneNo: 99457812365,
-      role: "Admin",
-      permission: "Token",
-      status: "close",
-    },
-  ];
+  const confirmDelete = async () => {
+    try {
+      const key = selectedUser.key; // Get the key from the selectedUser object
+  
+      // Query Firestore to find the document with the matching key
+      const userQuerySnapshot = await getDocs(
+        query(collection(db, "Adminusers"), where("key", "==", key))
+      );
+  
+      if (!userQuerySnapshot.empty) {
+        // Get the document ID of the user
+        const docId = userQuerySnapshot.docs[0].id;
+  
+        // Delete the user's document
+        await deleteDoc(doc(db, "Adminusers", docId));
+        message.success("User deleted successfully");
+        setDeleteModalVisible(false);
+      } else {
+        console.error("User not found. Please try again.");
+        message.error("Failed to delete user. User not found.");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      message.error("Failed to delete user. Please try again");
+    }
+  };
+  
 
+  // Inside the handleSaveChanges function
+  const handleSaveChanges = async () => {
+    try {
+      const key = userData.key; // Get the key from userData state
+
+      // Query Firestore to find the document with the matching key
+      const userQuerySnapshot = await getDocs(
+        query(collection(db, "Adminusers"), where("key", "==", key))
+      );
+
+      if (!userQuerySnapshot.empty) {
+        // Get the document ID of the user
+        const docId = userQuerySnapshot.docs[0].id;
+
+        // Update the user's document with new data
+        await updateDoc(doc(db, "Adminusers", docId), {
+          ...userData,
+          permission: Object.keys(individualCheckboxes).filter(
+            (key) => individualCheckboxes[key]
+          ),
+        });
+        form.resetFields();
+        message.success("Changes saved successfully!");
+        setEditMode(false); // Disable edit mode after saving changes
+      } else {
+        message.error("User not found. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      message.error("Failed to save changes. Please try again.");
+    }
+    setIndividualCheckboxes({
+      MainDashboard: false,
+      PaymentTracking: false,
+      Payment: false,
+      Token: false,
+      Adduser: false,
+    });
+    setSelectAllCheckbox(false);
+  };
+
+  const handleCancelEdit = () => {
+    form.resetFields();
+    setEditMode(false);
+  };
   return (
     <div>
       <div className="AddUser-section">
@@ -346,7 +439,7 @@ function AddUser() {
           >
             <div className="grid-container">
               <Form.Item
-                name="key"
+                name="userId"
                 rules={[
                   { required: true, message: "Please input User ID!" },
                   {
@@ -502,6 +595,19 @@ function AddUser() {
                   >
                     Save
                   </Button>
+                  {editMode && (
+                    <div style={{ marginTop: 16 }}>
+                      <Button type="primary" onClick={handleSaveChanges}>
+                        Save Changes
+                      </Button>
+                      <Button
+                        style={{ marginLeft: 8 }}
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 </Form.Item>
               </div>
             </div>
@@ -539,6 +645,22 @@ function AddUser() {
         columns={columns}
         dataSource={userList} // Pass userData as an array
       />
+      {/* dlelte confirmation modal */}
+      <Modal
+        title="Confirm Delete"
+        open={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setDeleteModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button key="delete" type="primary" onClick={confirmDelete}>
+            Delete
+          </Button>,
+        ]}
+      >
+        <p>Are you sure you want to delete this user?</p>
+      </Modal>
     </div>
   );
 }
