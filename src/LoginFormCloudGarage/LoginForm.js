@@ -3,12 +3,20 @@ import "./LoginForm.css";
 import { Button, Form, Input, message } from "antd";
 import LogoImg from "../Asset/CG Logo.PNG";
 import { Link, useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 function LoginForm() {
   const navigate = useNavigate();
-
-  const handleSubmitted = () => {
-    navigate("/dashboard/main");
+  const handleSubmitted = async (values) => {
+    const { email, password } = values;
+    // login with superadmin@gmail.com , Qwerty@1
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard/main");
+    } catch (error) {
+      message.error("Invalid user or password")
+    }
   };
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
@@ -62,7 +70,7 @@ function LoginForm() {
             rules={[
               {
                 validator: validatePassword,
-              }
+              },
             ]}
           >
             <Input.Password
@@ -75,7 +83,9 @@ function LoginForm() {
 
           <Form.Item name="forgetpassword">
             <div className="forget-passowrd">
-              <Link to="mailvalidation" className="forgetpassword">Forgot password</Link>
+              <Link to="mailvalidation" className="forgetpassword">
+                Forgot password
+              </Link>
             </div>
           </Form.Item>
 

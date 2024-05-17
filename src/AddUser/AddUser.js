@@ -13,7 +13,7 @@ import {
   Modal,
 } from "antd";
 import "./AddUser.css";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import {
   collection,
   getDocs,
@@ -24,12 +24,9 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 function AddUser() {
-  // In your AddUser.js file or wherever you're using `db`
-
-  // console.log(db);
-
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [userData, setUserData] = useState({
@@ -53,6 +50,8 @@ function AddUser() {
   const [editMode, setEditMode] = useState(false); // State to track edit mod
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+ 
+  //uploading img
   const normFile = (e) => {
     if (Array.isArray(e)) {
       return e;
@@ -60,26 +59,29 @@ function AddUser() {
     return e && e.fileList;
   };
 
+  const fetchUsers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "Adminusers"));
+      const users = [];
+      querySnapshot.forEach((doc) => {
+        users.push({ key: doc.id, ...doc.data() });
+      });
+      setUserList(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      message.error("Failed to fetch users. Please try again.");
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "Adminusers"));
-        const users = [];
-        querySnapshot.forEach((doc) => {
-          users.push({ key: doc.id, ...doc.data() });
-        });
-        setUserList(users);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        message.error("Failed to fetch users. Please try again.");
-      }
-    };
     fetchUsers();
   }, []);
 
   const addUserToFirestore = async (userData) => {
     try {
-      const docRef = await addDoc(collection(db, "Adminusers"), userData);
+      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+      const user = userCredential.user
+      const docRef = await addDoc(collection(db, "Adminusers"), {...userData, uid:user.uid});
       console.log("User data added to Firestore with ID: ", docRef.id);
       message.success("User added successfully!");
     } catch (error) {
@@ -93,7 +95,32 @@ function AddUser() {
       ...prevUserData,
       ...allValues,
     }));
+  
+    // Check permissions based on selected role
+    const role = changedValues.role || allValues.role;
+    if (role === "SuperAdmin") {
+      setIndividualCheckboxes({
+        MainDashboard: true,
+        PaymentTracking: true,
+        Payment: true,
+        Token: true,
+        Adduser: true,
+      });
+      setSelectAllCheckbox(true);
+    } else if (role === "Admin") {
+      setIndividualCheckboxes({
+        MainDashboard: true,
+        PaymentTracking: true,
+        Payment: false,
+        Token: true,
+        Adduser: false,
+      });
+      setSelectAllCheckbox(false);
+    } else {
+      // Handle other roles if necessary
+    }
   };
+  
 
   function handleChange(info) {
     let fileList = [...info.fileList];
@@ -121,6 +148,7 @@ function AddUser() {
       Adduser: false,
     });
     setSelectAllCheckbox(false);
+    setEditMode(false);
   };
 
   const handleSave = async () => {
@@ -169,7 +197,6 @@ function AddUser() {
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
       );
-
       const currentDate = new Date();
       const day = currentDate.getDate();
       const monthNames = [
@@ -324,17 +351,20 @@ function AddUser() {
       ),
     },
   ];
-  const updateUserInFirestore = async (userData) => {
+
+   const updateUserInFirestore = async (userData) => {
     try {
-      const userRef = doc(db, "Adminusers", userData.id);
+      const userRef = doc(db, "Adminusers", userData.key);
       await updateDoc(userRef, userData);
       console.log("User data updated in Firestore");
       message.success("User details updated successfully!");
+      fetchUsers();
     } catch (error) {
       console.error("Error updating user data in Firestore: ", error);
       message.error("Failed to update user details. Please try again.");
     }
   };
+
   // Inside the handleEdit function
   const handleEdit = (record) => {
     setUserData({ ...record });
@@ -346,6 +376,7 @@ function AddUser() {
     form.setFieldsValue(record);
     setEditMode(true);
   };
+  
   // Function to handle delete action
   const handleDelete = (record) => {
     setSelectedUser(record);
@@ -379,7 +410,6 @@ function AddUser() {
     }
   };
   
-
   // Inside the handleSaveChanges function
   const handleSaveChanges = async () => {
     try {
@@ -420,11 +450,13 @@ function AddUser() {
     });
     setSelectAllCheckbox(false);
   };
-
+  
   const handleCancelEdit = () => {
     form.resetFields();
     setEditMode(false);
+    setSelectAllCheckbox(false);
   };
+
   return (
     <div>
       <div className="AddUser-section">
@@ -501,6 +533,7 @@ function AddUser() {
               </Form.Item>
               <Form.Item
                 name="role"
+                // onChange={handleRoleChange}
                 rules={[{ required: true, message: "Please select Role!" }]}
               >
                 <Select placeholder="Role">
