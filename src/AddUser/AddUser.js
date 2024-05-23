@@ -11,9 +11,10 @@ import {
   Checkbox,
   message,
   Modal,
+  Image,
 } from "antd";
 import "./AddUser.css";
-import { auth, db } from "../firebase";
+import { auth, db, storage } from "../firebase";
 import {
   collection,
   getDocs,
@@ -24,10 +25,30 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+
+const getBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
 
 function AddUser() {
   const [form] = Form.useForm();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
   const [fileList, setFileList] = useState([]);
   const [userData, setUserData] = useState({
     userId: "",
@@ -37,6 +58,7 @@ function AddUser() {
     phoneNo: "",
     role: "",
     permission: [],
+    profilePhoto: "",
   });
   const [individualCheckboxes, setIndividualCheckboxes] = useState({
     MainDashboard: false,
@@ -50,14 +72,6 @@ function AddUser() {
   const [editMode, setEditMode] = useState(false); // State to track edit mod
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
- 
-  //uploading img
-  const normFile = (e) => {
-    if (Array.isArray(e)) {
-      return e;
-    }
-    return e && e.fileList;
-  };
 
   const fetchUsers = async () => {
     try {
@@ -79,23 +93,41 @@ function AddUser() {
 
   const addUserToFirestore = async (userData) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-      const user = userCredential.user
-      const docRef = await addDoc(collection(db, "Adminusers"), {...userData, uid:user.uid});
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        userData.email,
+        userData.password
+      );
+      const user = userCredential.user;
+      const docRef = await addDoc(collection(db, "Adminusers"), {
+        ...userData,
+        uid: user.uid,
+      });
       console.log("User data added to Firestore with ID: ", docRef.id);
       message.success("User added successfully!");
+      fetchUsers(); // Fetch users after adding a new user
     } catch (error) {
       console.error("Error adding user data to Firestore: ", error);
       message.error("Failed to add user. Please try again.");
     }
   };
 
+  const handlePreview = async (file) => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj);
+    }
+    setPreviewImage(file.url || file.preview);
+    setPreviewOpen(true);
+  };
+
+  const handleChange = ({ fileList: newFileList }) => setFileList(newFileList);
+
   const handleFormChange = (changedValues, allValues) => {
     setUserData((prevUserData) => ({
       ...prevUserData,
       ...allValues,
     }));
-  
+
     // Check permissions based on selected role
     const role = changedValues.role || allValues.role;
     if (role === "SuperAdmin") {
@@ -117,19 +149,18 @@ function AddUser() {
       });
       setSelectAllCheckbox(false);
     } else {
-      // Handle other roles if necessary
+      setIndividualCheckboxes({
+        MainDashboard: false,
+        PaymentTracking: false,
+        Payment: false,
+        Token: false,
+        Adduser: false,
+      });
+      setSelectAllCheckbox(false);
     }
   };
-  
-
-  function handleChange(info) {
-    let fileList = [...info.fileList];
-    fileList = fileList.slice(-1);
-    setFileList(fileList);
-  }
 
   const handleCancel = () => {
-    setFileList([]);
     form.resetFields();
     setUserData({
       userId: "",
@@ -140,6 +171,7 @@ function AddUser() {
       role: "",
       permission: [],
     });
+    setFileList([]);
     setIndividualCheckboxes({
       MainDashboard: false,
       PaymentTracking: false,
@@ -197,6 +229,7 @@ function AddUser() {
       const permission = Object.keys(individualCheckboxes).filter(
         (key) => individualCheckboxes[key]
       );
+
       const currentDate = new Date();
       const day = currentDate.getDate();
       const monthNames = [
@@ -224,6 +257,15 @@ function AddUser() {
         status: "Open",
       };
 
+      if (fileList.length > 0) {
+        const file = fileList[0].originFileObj;
+        const storageRef = ref(storage, `profilePhotos/${userId}`);
+        await uploadBytes(storageRef, file);
+        const profilePhotoURL = await getDownloadURL(storageRef);
+
+        userDataWithPermissions.profilePhoto = profilePhotoURL;
+      }
+
       if (editMode) {
         await updateUserInFirestore(userDataWithPermissions);
       } else {
@@ -236,6 +278,7 @@ function AddUser() {
       }));
 
       form.resetFields();
+      setFileList([]);
       setIndividualCheckboxes({
         MainDashboard: false,
         PaymentTracking: false,
@@ -339,12 +382,12 @@ function AddUser() {
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
+      render: (record) => (
         <Space size="middle">
           <a onClick={() => handleEdit(record)}>
             <EditTwoTone />
           </a>
-          <a onClick={() => handleDelete(record)}>
+          <a onClick={() => showDeleteModel(record)}>
             <DeleteTwoTone />
           </a>
         </Space>
@@ -352,64 +395,76 @@ function AddUser() {
     },
   ];
 
-   const updateUserInFirestore = async (userData) => {
+  const updateUserInFirestore = async (userData) => {
     try {
       const userRef = doc(db, "Adminusers", userData.key);
       await updateDoc(userRef, userData);
       console.log("User data updated in Firestore");
-      message.success("User details updated successfully!");
+      message.success("User updated successfully!");
       fetchUsers();
     } catch (error) {
       console.error("Error updating user data in Firestore: ", error);
-      message.error("Failed to update user details. Please try again.");
+      message.error("Failed to update user. Please try again.");
     }
   };
 
-  // Inside the handleEdit function
   const handleEdit = (record) => {
-    setUserData({ ...record });
-    const checkboxes = { ...individualCheckboxes };
-    record.permission.forEach((perm) => {
-      checkboxes[perm] = true;
-    });
-    setIndividualCheckboxes(checkboxes);
     form.setFieldsValue(record);
+    setUserData(record);
+    setIndividualCheckboxes(
+      record.permission.reduce((acc, permission) => {
+        acc[permission] = true;
+        return acc;
+      }, {})
+    );
     setEditMode(true);
+    fetchUsers();
   };
-  
+
   // Function to handle delete action
-  const handleDelete = (record) => {
+  const showDeleteModel = (record) => {
     setSelectedUser(record);
     setDeleteModalVisible(true);
   };
 
-  const confirmDelete = async () => {
+  const handleDeleteUser = async () => {
     try {
       const key = selectedUser.key; // Get the key from the selectedUser object
-  
+
       // Query Firestore to find the document with the matching key
       const userQuerySnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("key", "==", key))
       );
-  
+
       if (!userQuerySnapshot.empty) {
         // Get the document ID of the user
         const docId = userQuerySnapshot.docs[0].id;
-  
-        // Delete the user's document
+        const userData = userQuerySnapshot.docs[0].data();
+
+        // Delete the user's document from Firestore
         await deleteDoc(doc(db, "Adminusers", docId));
+
+        // Delete the user's authentication record
+        const user = await signInWithEmailAndPassword(auth, userData.email, userData.password);
+        await deleteUser(user.user);
+
+        // Delete the user's profile photo from Firebase Storage
+        const profilePhotoRef = ref(storage, `profilePhotos/${key}`);
+        await deleteObject(profilePhotoRef);
+
         message.success("User deleted successfully");
         setDeleteModalVisible(false);
       } else {
         console.error("User not found. Please try again.");
         message.error("Failed to delete user. User not found.");
       }
+      fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
-      message.error("Failed to delete user. Please try again");
+      message.error("Failed to delete user. Please try again.");
     }
   };
-  
+
   // Inside the handleSaveChanges function
   const handleSaveChanges = async () => {
     try {
@@ -450,7 +505,7 @@ function AddUser() {
     });
     setSelectAllCheckbox(false);
   };
-  
+
   const handleCancelEdit = () => {
     form.resetFields();
     setEditMode(false);
@@ -646,28 +701,49 @@ function AddUser() {
             </div>
 
             <Form.Item
-              label={<h6>Upload image</h6>}
-              valuePropName="fileList"
-              getValueFromEvent={normFile}
+              label={<h6>Profile Photo</h6>}
+              // valuePropName="fileList"
+              // name="profilePhoto"
+              // getValueFromEvent={normFile}
             >
               <Upload
-                action="/upload.do"
+                name="profilePhoto"
                 listType="picture-card"
                 fileList={fileList}
+                onPreview={handlePreview}
                 onChange={handleChange}
-                maxCount={1}
-                style={{ width: 500, height: 500 }}
+                beforeUpload={() => false}
               >
-                {fileList.length === 0 && (
-                  <button
-                    style={{ border: 0, background: "none" }}
-                    type="button"
-                  >
+                {fileList.length >= 1 ? null : (
+                  <div>
                     <PlusOutlined />
                     <div style={{ marginTop: 8 }}>Upload</div>
-                  </button>
+                  </div>
                 )}
               </Upload>
+              {previewImage && (
+                <Image
+                  wrapperStyle={{
+                    display: "none",
+                  }}
+                  preview={{
+                    visible: previewOpen,
+                    onVisibleChange: (visible) => setPreviewOpen(visible),
+                    afterOpenChange: (visible) =>
+                      !visible && setPreviewImage(""),
+                  }}
+                  src={previewImage}
+                />
+              )}
+              {/* <Upload
+                name="profilePhoto"
+                listType="picture-card"
+                fileList={fileList} // Ensure fileList is passed correctly
+                beforeUpload={() => false} // Prevent automatic upload
+                onChange={handleChange} // Ensure onChange handler is correct
+              >
+                {fileList.length === 0 && <PlusOutlined />}
+              </Upload> */}
             </Form.Item>
           </Form>
         </div>
@@ -687,7 +763,7 @@ function AddUser() {
           <Button key="cancel" onClick={() => setDeleteModalVisible(false)}>
             Cancel
           </Button>,
-          <Button key="delete" type="primary" onClick={confirmDelete}>
+          <Button key="delete" type="primary" onClick={handleDeleteUser}>
             Delete
           </Button>,
         ]}
