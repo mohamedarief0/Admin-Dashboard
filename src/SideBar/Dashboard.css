@@ -1,9 +1,12 @@
 .slider-container {
   display: flex;
 }
-
 .slider-menu {
   margin-right: 20px; /* Adjust as needed */
   width: 250px;
 }
 
+:where(.css-dev-only-do-not-override-17seli4).ant-layout.ant-layout-sider-trigger {
+  /* color: #606060 !important; */
+  background: white !important;
+}
