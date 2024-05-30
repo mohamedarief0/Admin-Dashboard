@@ -8,6 +8,7 @@ border-radius: 50%;
 .admin-name{
   display: flex;
   flex-direction: column;
+  margin: 0;
 }
 
 /* logo */
@@ -19,7 +20,7 @@ border-radius: 50%;
 .logo-container {
   width: 100vw;
   background-color: white;
-  position: sticky;
+  position: fixed;
   top: 0;
   z-index: 100;
 }
@@ -57,5 +58,8 @@ border-radius: 50%;
 }
 
 :where(.css-dev-only-do-not-override-42nv3w).ant-layout-header {
-  line-height: 18px !important;
+  line-height: 0px !important;
+}
+:where(.css-dev-only-do-not-override-17seli4).ant-layout-header {
+  line-height: 0px !important;
 }

@@ -77,13 +77,9 @@ function HeaderComponent() {
                   alt="profile-avator"
                 />
               </div>
-              <div className="admin-name ms-2 justify-content-around">
-                <h6 className="mb-0">Name</h6>
-                <Dropdown overlay={menu} placement="bottomRight">
-                  <span className="ant-dropdown-link">
-                    Super Admin <CaretDownFilled />
-                  </span>
-                </Dropdown>
+              <div className="admin-name ms-2 justify-content-between">
+                <h6 className="">Name</h6>
+                <p className="">Super Admin</p>
               </div>
             </Link>
           </li>

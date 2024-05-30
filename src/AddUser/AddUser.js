@@ -69,7 +69,7 @@ function AddUser() {
   });
   const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
   const [userList, setUserList] = useState([]); // each user from the data base to firebase
-  const [editMode, setEditMode] = useState(false); // State to track edit mod
+  const [editMode, setEditMode] = useState(false); // State to track edit mode
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -372,7 +372,7 @@ function AddUser() {
       title: "Permission",
       key: "permission",
       dataIndex: "permission",
-      render: (permissions) => permissions.join(", "),
+      render: (permissions) => (permissions ? permissions.join(", ") : ""),
     },
     {
       title: "Status",
