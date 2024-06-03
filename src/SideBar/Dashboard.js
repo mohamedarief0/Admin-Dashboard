@@ -27,9 +27,11 @@ const Dashboard = () => {
   const [selectedKey, setSelectedKey] = useState("/dashboard/main"); // State to keep track of the selected menu item
   const [userRole, setUserRole] = useState(""); // State to store user's role
   const [userPermissions, setUserPermissions] = useState([]); // State to store user's permissions
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // State to track if user is logging out
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+  const [userData, setUserData] = useState(null);
 
   // Function to fetch user role and permissions from Firestore
   const fetchUserData = async (uid) => {
@@ -42,8 +44,9 @@ const Dashboard = () => {
         querySnapshot.forEach((doc) => {
           console.log("User data found:", doc.data());
           const userData = doc.data();
-          setUserRole(userData.role);
+          // setUserRole(userData.role);
           setUserPermissions(userData.permission || []);
+          setUserData(userData);
         });
       } else {
         console.error("User data not found in Firestore for UID:", uid);
@@ -59,20 +62,27 @@ const Dashboard = () => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         console.log("User is authenticated:", user);
-        fetchUserData(user.uid);
+        // Fetch user data only if it hasn't been fetched before
+        if (!userPermissions.length) {
+          fetchUserData(user.uid);
+        }
       } else {
-        console.error("User is not authenticated");
-        // message.error("User is not authenticated");
-        message.success("Log out successfully");
+        if (!isLoggingOut) {
+          console.error("User is not authenticated");
+          message.info("User is not authenticated");
+          // Redirect to the login page or handle the unauthenticated state as needed
+          // navigate("/login");
+        }
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [userPermissions, isLoggingOut]); // Only re-run the effect if userPermissions or isLoggingOut change
 
   // Function to handle menu item click
   const handleMenuClick = ({ key }) => {
     if (key === "/dashboard/logout") {
       console.log("Performing logout action...");
+      setIsLoggingOut(true);
       auth
         .signOut()
         .then(() => {
@@ -81,7 +91,9 @@ const Dashboard = () => {
         .catch((error) => {
           console.error("Error signing out:", error);
           message.error("Failed to sign out");
+          setIsLoggingOut(false);
         });
+      message.success("logout successfull");
     } else {
       setSelectedKey(key);
       navigate(key);
@@ -98,9 +110,9 @@ const Dashboard = () => {
       case "/dashboard/paymenttracking":
         return <PaymentTracking />;
       case "/dashboard/user":
-        return userPermissions.includes("Adduser") ? <AddUser /> : null;
+        return <AddUser />;
       case "/dashboard/payment":
-        return userPermissions.includes("Payment") ? <BuyerUpload /> : null;
+        return <BuyerUpload />;
       default:
         return null;
     }
@@ -111,7 +123,7 @@ const Dashboard = () => {
       <Header
         style={{ padding: 0, marginBottom: 20, background: colorBgContainer }}
       >
-        <HeaderComponent />
+        <HeaderComponent userData={userData} />
       </Header>
       <Layout>
         <Sider
@@ -120,7 +132,7 @@ const Dashboard = () => {
             paddingTop: 15,
             height: "100vh",
             position: "fixed",
-            zIndex: 1001,
+            zIndex: 100,
             left: 0,
             top: 78,
             bottom: 0,
@@ -135,43 +147,55 @@ const Dashboard = () => {
             mode="inline"
             defaultSelectedKeys={["/dashboard/main"]}
             selectedKeys={[selectedKey]}
+            // style={{marginTop:"50%"}}
           >
-            <Menu.Item
-              key="/dashboard/main"
-              icon={
-                <img
-                  src={DashboardMonitorIcon}
-                  width={18}
-                  height={18}
-                  alt="DashboardIcon"
-                />
-              }
-            >
-              Main Dashboard
-            </Menu.Item>
-            <Menu.Item
-              key="/dashboard/token"
-              icon={
-                <img src={TicketIcon} width={18} height={18} alt="ticketIcon" />
-              }
-            >
-              Token's
-            </Menu.Item>
-            <Menu.Item
-              key="/dashboard/paymenttracking"
-              icon={
-                <img
-                  src={PaymentTrackingIcon}
-                  width={18}
-                  height={18}
-                  alt="PaymentIcon"
-                />
-              }
-            >
-              Payment tracking
-            </Menu.Item>
+            {userPermissions.includes("MainDashboard") && (
+              <Menu.Item
+                key="/dashboard/main"
+                icon={
+                  <img
+                    src={DashboardMonitorIcon}
+                    width={18}
+                    height={18}
+                    alt="DashboardIcon"
+                  />
+                }
+              >
+                Main Dashboard
+              </Menu.Item>
+            )}
+            {userPermissions.includes("Token") && (
+              <Menu.Item
+                key="/dashboard/token"
+                icon={
+                  <img
+                    src={TicketIcon}
+                    width={18}
+                    height={18}
+                    alt="ticketIcon"
+                  />
+                }
+              >
+                Token's
+              </Menu.Item>
+            )}
+            {userPermissions.includes("PaymentTracking") && (
+              <Menu.Item
+                key="/dashboard/paymenttracking"
+                icon={
+                  <img
+                    src={PaymentTrackingIcon}
+                    width={18}
+                    height={18}
+                    alt="PaymentIcon"
+                  />
+                }
+              >
+                Payment tracking
+              </Menu.Item>
+            )}
 
-            {userRole === "SuperAdmin" && (
+            {userPermissions.includes("Payment") && (
               <Menu.Item
                 key="/dashboard/payment"
                 icon={
@@ -186,7 +210,7 @@ const Dashboard = () => {
                 Payment
               </Menu.Item>
             )}
-            {userRole === "SuperAdmin" && (
+            {userPermissions.includes("Adduser") && (
               <Menu.Item
                 key="/dashboard/user"
                 icon={
@@ -205,7 +229,7 @@ const Dashboard = () => {
               key="/dashboard/logout"
               icon={<LogoutOutlined />}
               danger
-              style={{ marginTop: "50px" }}
+              style={{ marginTop: "30px" }}
             >
               Logout
             </Menu.Item>
@@ -214,7 +238,6 @@ const Dashboard = () => {
         <Layout style={{ marginLeft: collapsed ? 80 : 200 }}>
           <Content
             style={{
-              // marginLeft: "206px",
               padding: "10px 20px 40px",
               minHeight: 280,
               overflow: "auto",
@@ -227,5 +250,4 @@ const Dashboard = () => {
     </Layout>
   );
 };
-
 export default Dashboard;
