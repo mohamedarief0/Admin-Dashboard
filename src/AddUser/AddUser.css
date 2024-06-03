@@ -1,28 +1,19 @@
-.AddUser-section {
-  /* margin: 20px 20px; */
-}
-
-/* table */
-.table-Adduser{
-    /* margin: 30px 20px; */
-    /* width: 1200px; */
-}
-
 .AddUser-bg-color {
-  background-color: white;
   width: 700px;
+  background-color: white;
   display: inline-block;
   padding: 20px;
   margin-bottom: 20px;
   border-radius: 8px;
   border: 1px solid rgb(204, 204, 204);
+  /* box-shadow:  4px 8px 15px  rgb(221, 221, 221);  */
 }
 
 /* outer grid container  */
 .grid-containers {
   display: grid;
   /* grid-template-columns:  repeat( 2, 4fr ); */
-  grid-template-columns: 420px 200px;
+  grid-template-columns: 515px 120px;
   justify-content: space-between;
 }
 
@@ -40,10 +31,15 @@
 .btn-span {
   grid-column: span 2;
 }
-.checkbox-para{
+.checkbox-para {
   font-size: 10px;
   color: gray;
-  
 }
-
-
+.checkbox-text-color {
+  color: gray;
+}
+.border-circle {
+  border: 1px solid rgb(197, 197, 197);
+  border-radius: 15px;
+  padding: 6px 12px;
+}
