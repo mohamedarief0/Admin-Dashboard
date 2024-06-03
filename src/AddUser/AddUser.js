@@ -72,6 +72,8 @@ function AddUser() {
   const [editMode, setEditMode] = useState(false); // State to track edit mode
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userRole, setUserRole] = useState("");
+  const [loading, setLoading] = useState(false); // New loading state
 
   const fetchUsers = async () => {
     try {
@@ -81,14 +83,35 @@ function AddUser() {
         users.push({ key: doc.id, ...doc.data() });
       });
       setUserList(users);
+      // setUserRole(userList.role);
     } catch (error) {
       console.error("Error fetching users:", error);
       message.error("Failed to fetch users. Please try again.");
     }
   };
 
+  const fetchUserRole = async () => {
+    try {
+      // Assuming the logged-in user's email is available in auth.currentUser.email
+      const email = auth.currentUser.email;
+      const q = query(
+        collection(db, "Adminusers"),
+        where("email", "==", email)
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        setUserRole(userData.role);
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      message.error("Failed to fetch user role. Please try again.");
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchUserRole();
   }, []);
 
   const addUserToFirestore = async (userData) => {
@@ -109,6 +132,8 @@ function AddUser() {
     } catch (error) {
       console.error("Error adding user data to Firestore: ", error);
       message.error("Failed to add user. Please try again.");
+    } finally {
+      setLoading(false); // Set loading to false after process completes
     }
   };
 
@@ -130,7 +155,7 @@ function AddUser() {
 
     // Check permissions based on selected role
     const role = changedValues.role || allValues.role;
-    if (role === "SuperAdmin") {
+    if (role === "Super Admin") {
       setIndividualCheckboxes({
         MainDashboard: true,
         PaymentTracking: true,
@@ -145,7 +170,7 @@ function AddUser() {
         PaymentTracking: true,
         Payment: false,
         Token: true,
-        Adduser: false,
+        Adduser: true,
       });
       setSelectAllCheckbox(false);
     } else {
@@ -184,6 +209,7 @@ function AddUser() {
   };
 
   const handleSave = async () => {
+    setLoading(true); // Set loading to true when the save process starts
     try {
       const values = await form.validateFields();
       const userId = values.userId;
@@ -203,6 +229,7 @@ function AddUser() {
 
       if (!userId || !email || !phoneNo) {
         message.error("Please fill in all required fields.");
+        setLoading(false); // Reset loading state if validation fails
         return;
       }
 
@@ -214,15 +241,19 @@ function AddUser() {
         message.warning(
           "A user with the same email or phone number or key already exists."
         );
+        setLoading(false); // Reset loading state if user already exists
         return;
       } else if (keyExists) {
         message.warning("A user with the same key exists.");
+        setLoading(false); // Reset loading state if user already exists
         return;
       } else if (emailExists) {
         message.warning("A user with the same email already exists.");
+        setLoading(false); // Reset loading state if user already exists
         return;
       } else if (phoneNoExists) {
         message.warning("A user with the same phone number already exists.");
+        setLoading(false); // Reset loading state if user already exists
         return;
       }
 
@@ -291,6 +322,8 @@ function AddUser() {
     } catch (error) {
       console.error("Error adding user:", error);
       message.error("Failed to add user. Please try again.");
+    } finally {
+      setLoading(false); // Reset loading state after process completes
     }
   };
 
@@ -379,25 +412,60 @@ function AddUser() {
       key: "status",
       dataIndex: "status",
     },
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: (record) => (
+    //     <Space size="middle">
+    //       <a onClick={() => handleEdit(record)}>
+    //         <EditTwoTone />
+    //       </a>
+    //       <a onClick={() => showDeleteModel(record)}>
+    //         <DeleteTwoTone />
+    //       </a>
+    //     </Space>
+    //   ),
+    // },
     {
-      title: "Action",
-      key: "action",
-      render: (record) => (
-        <Space size="middle">
-          <a onClick={() => handleEdit(record)}>
-            <EditTwoTone />
-          </a>
-          <a onClick={() => showDeleteModel(record)}>
-            <DeleteTwoTone />
-          </a>
-        </Space>
-      ),
+      title: "Actions",
+      key: "actions",render: (record) => (
+            <Space size="middle">
+              <a onClick={() => handleEdit(record)}>
+                <EditTwoTone />
+              </a>
+              <a onClick={() => showDeleteModel(record)}>
+                <DeleteTwoTone />
+              </a>
+            </Space>
+          ),
+      // Conditional rendering for Actions column
+      render: (text, record) =>
+        userRole === "Super Admin" ? (
+          <Space size="middle">
+            <EditTwoTone onClick={() => handleEdit(record)} />
+            <DeleteTwoTone onClick={() => showDeleteModel(record)} />
+          </Space>
+        ) : null, // Hide actions for "Admin" users
     },
   ];
 
   const updateUserInFirestore = async (userData) => {
     try {
       const userRef = doc(db, "Adminusers", userData.key);
+
+      if (fileList.length > 0 && userData.profilePhoto) {
+        const oldPhotoRef = ref(storage, userData.profilePhoto);
+        await deleteObject(oldPhotoRef);
+      }
+
+      if (fileList.length > 0) {
+        const file = fileList[0].originFileObj;
+        const storageRef = ref(storage, `profilePhotos/${userData.key}`);
+        await uploadBytes(storageRef, file);
+        const profilePhotoURL = await getDownloadURL(storageRef);
+        userData.profilePhoto = profilePhotoURL;
+      }
+
       await updateDoc(userRef, userData);
       console.log("User data updated in Firestore");
       message.success("User updated successfully!");
@@ -410,6 +478,7 @@ function AddUser() {
 
   const handleEdit = (record) => {
     form.setFieldsValue(record);
+    fetchUsers();
     setUserData(record);
     setIndividualCheckboxes(
       record.permission.reduce((acc, permission) => {
@@ -417,8 +486,19 @@ function AddUser() {
         return acc;
       }, {})
     );
+    setFileList(
+      record.profilePhoto
+        ? [
+            {
+              uid: "-1",
+              name: "profilePhoto.png",
+              status: "done",
+              url: record.profilePhoto,
+            },
+          ]
+        : []
+    );
     setEditMode(true);
-    fetchUsers();
   };
 
   // Function to handle delete action
@@ -445,12 +525,21 @@ function AddUser() {
         await deleteDoc(doc(db, "Adminusers", docId));
 
         // Delete the user's authentication record
-        const user = await signInWithEmailAndPassword(auth, userData.email, userData.password);
+        const user = await signInWithEmailAndPassword(
+          auth,
+          userData.email,
+          userData.password
+        );
         await deleteUser(user.user);
 
         // Delete the user's profile photo from Firebase Storage
         const profilePhotoRef = ref(storage, `profilePhotos/${key}`);
         await deleteObject(profilePhotoRef);
+
+        // Update userList state by removing the deleted user
+        setUserList((prevUserList) =>
+          prevUserList.filter((user) => user.key !== key)
+        );
 
         message.success("User deleted successfully");
         setDeleteModalVisible(false);
@@ -467,6 +556,7 @@ function AddUser() {
 
   // Inside the handleSaveChanges function
   const handleSaveChanges = async () => {
+    setLoading(true); // Set loading to true when save changes process starts
     try {
       const key = userData.key; // Get the key from userData state
 
@@ -488,267 +578,283 @@ function AddUser() {
         });
         form.resetFields();
         message.success("Changes saved successfully!");
+        setFileList([]);
         setEditMode(false); // Disable edit mode after saving changes
+        fetchUsers(); // featching user after editing
+        setIndividualCheckboxes({
+          MainDashboard: false,
+          PaymentTracking: false,
+          Payment: false,
+          Token: false,
+          Adduser: false,
+        });
+        setSelectAllCheckbox(false);
       } else {
         message.error("User not found. Please try again.");
+      }
+
+      // Handle profile photo update
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        const newPhotoFile = fileList[0].originFileObj;
+
+        // If there is an old photo, delete it first
+        if (userData.profilePhoto) {
+          const oldPhotoRef = ref(storage, userData.profilePhoto);
+          await deleteObject(oldPhotoRef);
+        }
+
+        // Upload the new photo
+        const storageRef = ref(storage, `profilePhotos/${userData.key}`);
+        await uploadBytes(storageRef, newPhotoFile);
+        const newPhotoURL = await getDownloadURL(storageRef);
+        userData.profilePhoto = newPhotoURL; // Update userData with the new photo URL
       }
     } catch (error) {
       console.error("Error saving changes:", error);
       message.error("Failed to save changes. Please try again.");
+    } finally {
+      setLoading(false); // Reset loading state after process completes
     }
-    setIndividualCheckboxes({
-      MainDashboard: false,
-      PaymentTracking: false,
-      Payment: false,
-      Token: false,
-      Adduser: false,
-    });
-    setSelectAllCheckbox(false);
-  };
-
-  const handleCancelEdit = () => {
-    form.resetFields();
-    setEditMode(false);
-    setSelectAllCheckbox(false);
   };
 
   return (
     <div>
-      <div className="AddUser-section">
-        <h3 className="payment-title">Add user</h3>
-        <div className="AddUser-bg-color">
-          <Form
-            form={form}
-            name="horizontal_login"
-            layout="vertical"
-            className="grid-containers"
-            onValuesChange={handleFormChange}
-          >
-            <div className="grid-container">
-              <Form.Item
-                name="userId"
-                rules={[
-                  { required: true, message: "Please input User ID!" },
-                  {
-                    validator: (_, value) => {
-                      if (!value || value > 0) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error("User ID must be a positive integer.")
-                      );
+      {userRole === "Super Admin" && (
+        <div className="AddUser-section">
+          <h3 className="payment-title">Add user</h3>
+          <div className="AddUser-bg-color">
+            <Form
+              form={form}
+              name="horizontal_login"
+              layout="vertical"
+              className="grid-containers"
+              onValuesChange={handleFormChange}
+            >
+              <div className="grid-container">
+                <Form.Item
+                  name="userId"
+                  rules={[
+                    { required: true, message: "Please input User ID!" },
+                    {
+                      validator: (_, value) => {
+                        if (!value || value > 0) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          new Error("User ID must be a positive integer.")
+                        );
+                      },
                     },
-                  },
-                ]}
-              >
-                <Input prefix="" type="number" placeholder="User ID" />
-              </Form.Item>
-
-              <Form.Item
-                name="name"
-                rules={[{ required: true, message: "Please input Name!" }]}
-              >
-                <Input prefix="" type="text" placeholder="Name" />
-              </Form.Item>
-              <Form.Item
-                name="email"
-                rules={[
-                  { required: true, message: "Please input Email!" },
-                  { type: "email", message: "Please input a valid Email!" },
-                ]}
-              >
-                <Input prefix="" type="email" placeholder="Email" />
-              </Form.Item>
-              <Form.Item
-                name="password"
-                rules={[
-                  { required: true, message: "Please input Password!" },
-                  {
-                    pattern:
-                      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/,
-                    message:
-                      "Password must be at least 8 characters long and include uppercase, lowercase, numeric, and special characters.",
-                  },
-                ]}
-              >
-                <Input.Password placeholder="Password" />
-              </Form.Item>
-
-              <Form.Item
-                name="phoneNo"
-                rules={[
-                  { required: true, message: "Please input Phone No!" },
-                  {
-                    pattern: /^\d{10}$/,
-                    message: "Please input a valid Phone No!",
-                  },
-                ]}
-              >
-                <Input prefix="" type="number" placeholder="Phone No" />
-              </Form.Item>
-              <Form.Item
-                name="role"
-                // onChange={handleRoleChange}
-                rules={[{ required: true, message: "Please select Role!" }]}
-              >
-                <Select placeholder="Role">
-                  <Select.Option value="SuperAdmin">Super Admin</Select.Option>
-                  <Select.Option value="Admin">Admin</Select.Option>
-                </Select>
-              </Form.Item>
-
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-                className="btn-span"
-              >
-                <h6 className="me-3">User Permission:</h6>
-                <Checkbox
-                  onChange={handleCheckboxChange}
-                  checked={selectAllCheckbox}
+                  ]}
                 >
-                  Select All
-                </Checkbox>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-                className="btn-span"
-              >
-                <Checkbox
-                  name="MainDashboard"
-                  checked={individualCheckboxes.MainDashboard}
-                  onChange={handleIndividualChange}
-                >
-                  MainDashboard
-                </Checkbox>
-                <Checkbox
-                  name="PaymentTracking"
-                  checked={individualCheckboxes.PaymentTracking}
-                  onChange={handleIndividualChange}
-                >
-                  PaymentTracking
-                </Checkbox>
-                <Checkbox
-                  name="Payment"
-                  checked={individualCheckboxes.Payment}
-                  onChange={handleIndividualChange}
-                >
-                  Payment
-                </Checkbox>
-                <Checkbox
-                  name="Token"
-                  checked={individualCheckboxes.Token}
-                  onChange={handleIndividualChange}
-                >
-                  Token
-                </Checkbox>
-                <Checkbox
-                  name="Adduser"
-                  checked={individualCheckboxes.Adduser}
-                  onChange={handleIndividualChange}
-                >
-                  Adduser
-                </Checkbox>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-                className="btn-span"
-              >
-                <Form.Item>
-                  <Button
-                    size="large"
-                    style={{ width: 200 }}
-                    type="default"
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
+                  <Input prefix="" type="number" placeholder="User ID" />
                 </Form.Item>
-                <Form.Item>
-                  <Button
-                    size="large"
-                    style={{ width: 200 }}
-                    type="primary"
-                    onClick={handleSave}
+
+                <Form.Item
+                  name="name"
+                  rules={[{ required: true, message: "Please input Name!" }]}
+                >
+                  <Input prefix="" type="text" placeholder="Name" />
+                </Form.Item>
+                <Form.Item
+                  name="email"
+                  rules={[
+                    { required: true, message: "Please input Email!" },
+                    { type: "email", message: "Please input a valid Email!" },
+                  ]}
+                >
+                  <Input prefix="" type="email" placeholder="Email" />
+                </Form.Item>
+                <Form.Item
+                  name="password"
+                  rules={[
+                    { required: true, message: "Please input Password!" },
+                    {
+                      pattern:
+                        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/,
+                      message:
+                        "Password must be at least 8 characters long and include uppercase, lowercase, numeric, and special characters.",
+                    },
+                  ]}
+                >
+                  <Input.Password placeholder="Password" />
+                </Form.Item>
+
+                <Form.Item
+                  name="phoneNo"
+                  rules={[
+                    { required: true, message: "Please input Phone No!" },
+                    {
+                      pattern: /^\d{10}$/,
+                      message: "Please input a valid Phone No!",
+                    },
+                  ]}
+                >
+                  <Input prefix="" type="number" placeholder="Phone No" />
+                </Form.Item>
+                <Form.Item
+                  name="role"
+                  rules={[{ required: true, message: "Please select Role!" }]}
+                >
+                  <Select placeholder="Role">
+                    <Select.Option value="Super Admin">
+                      Super Admin
+                    </Select.Option>
+                    <Select.Option value="Admin">Admin</Select.Option>
+                  </Select>
+                </Form.Item>
+
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                  }}
+                  className="btn-span"
+                >
+                  <h6 className="me-3">User Permission:</h6>
+                  <Checkbox
+                    onChange={handleCheckboxChange}
+                    checked={selectAllCheckbox}
+                    className="checkbox-text-color"
                   >
-                    Save
-                  </Button>
-                  {editMode && (
-                    <div style={{ marginTop: 16 }}>
-                      <Button type="primary" onClick={handleSaveChanges}>
-                        Save Changes
-                      </Button>
+                    Select All
+                  </Checkbox>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  className="btn-span border-circle"
+                >
+                  <Checkbox
+                    name="MainDashboard"
+                    checked={individualCheckboxes.MainDashboard}
+                    onChange={handleIndividualChange}
+                    className="checkbox-text-color"
+                  >
+                    MainDashboard
+                  </Checkbox>
+                  <Checkbox
+                    name="PaymentTracking"
+                    checked={individualCheckboxes.PaymentTracking}
+                    onChange={handleIndividualChange}
+                    className="checkbox-text-color"
+                  >
+                    PaymentTracking
+                  </Checkbox>
+                  <Checkbox
+                    name="Payment"
+                    checked={individualCheckboxes.Payment}
+                    onChange={handleIndividualChange}
+                    className="checkbox-text-color"
+                  >
+                    Payment
+                  </Checkbox>
+                  <Checkbox
+                    name="Token"
+                    checked={individualCheckboxes.Token}
+                    onChange={handleIndividualChange}
+                    className="checkbox-text-color"
+                  >
+                    Token
+                  </Checkbox>
+                  <Checkbox
+                    name="Adduser"
+                    checked={individualCheckboxes.Adduser}
+                    onChange={handleIndividualChange}
+                    className="checkbox-text-color"
+                  >
+                    Adduser
+                  </Checkbox>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                  className="btn-span"
+                >
+                  <Form.Item>
+                    <Button
+                      size="large"
+                      style={{ width: 230 }}
+                      type="default"
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </Button>
+                  </Form.Item>
+                  <Form.Item>
+                    {editMode ? (
                       <Button
-                        style={{ marginLeft: 8 }}
-                        onClick={handleCancelEdit}
+                        size="large"
+                        style={{ width: 230 }}
+                        type="primary"
+                        onClick={handleSaveChanges}
+                        loading={loading}
                       >
-                        Cancel
+                        {loading ? "loading" : "Save Changes"}
                       </Button>
+                    ) : (
+                      <Button
+                        size="large"
+                        style={{ width: 230 }}
+                        type="primary"
+                        onClick={handleSave}
+                        loading={loading}
+                      >
+                        {loading ? "loading" : "Save"}
+                      </Button>
+                    )}
+                  </Form.Item>
+                </div>
+              </div>
+
+              <Form.Item
+                label={<h6>Profile Photo</h6>}
+                name="profilePhoto"
+                valuePropName="fileList"
+                getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+              >
+                <Upload
+                  // name="profilePhoto"
+                  listType="picture-card"
+                  fileList={fileList}
+                  onPreview={handlePreview}
+                  onChange={handleChange}
+                  beforeUpload={() => false}
+                >
+                  {fileList.length >= 1 ? null : (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Upload</div>
                     </div>
                   )}
-                </Form.Item>
-              </div>
-            </div>
-
-            <Form.Item
-              label={<h6>Profile Photo</h6>}
-              // valuePropName="fileList"
-              // name="profilePhoto"
-              // getValueFromEvent={normFile}
-            >
-              <Upload
-                name="profilePhoto"
-                listType="picture-card"
-                fileList={fileList}
-                onPreview={handlePreview}
-                onChange={handleChange}
-                beforeUpload={() => false}
-              >
-                {fileList.length >= 1 ? null : (
-                  <div>
-                    <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>Upload</div>
-                  </div>
+                </Upload>
+                {previewImage && (
+                  <Image
+                    wrapperStyle={{
+                      display: "none",
+                    }}
+                    preview={{
+                      visible: previewOpen,
+                      onVisibleChange: (visible) => setPreviewOpen(visible),
+                      afterOpenChange: (visible) =>
+                        !visible && setPreviewImage(""),
+                    }}
+                    src={previewImage}
+                  />
                 )}
-              </Upload>
-              {previewImage && (
-                <Image
-                  wrapperStyle={{
-                    display: "none",
-                  }}
-                  preview={{
-                    visible: previewOpen,
-                    onVisibleChange: (visible) => setPreviewOpen(visible),
-                    afterOpenChange: (visible) =>
-                      !visible && setPreviewImage(""),
-                  }}
-                  src={previewImage}
-                />
-              )}
-              {/* <Upload
-                name="profilePhoto"
-                listType="picture-card"
-                fileList={fileList} // Ensure fileList is passed correctly
-                beforeUpload={() => false} // Prevent automatic upload
-                onChange={handleChange} // Ensure onChange handler is correct
-              >
-                {fileList.length === 0 && <PlusOutlined />}
-              </Upload> */}
-            </Form.Item>
-          </Form>
+              </Form.Item>
+            </Form>
+          </div>
+          <hr></hr>
         </div>
-        <hr></hr>
-      </div>
+      )}
+
       <Table
         className="table-Adduser"
         columns={columns}
@@ -758,7 +864,7 @@ function AddUser() {
       <Modal
         title="Confirm Delete"
         open={deleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
+        onCancel={() => setDeleteModalVisible(false)}
         footer={[
           <Button key="cancel" onClick={() => setDeleteModalVisible(false)}>
             Cancel
