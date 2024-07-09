@@ -1,0 +1,81 @@
+body {
+    background-color: rgb(243, 243, 243);
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  /* innerContainer */
+  .innercontainer {
+    width: 400px;
+    padding: 35px;
+    box-sizing: border-box;
+    border: 1px solid rgb(190, 190, 190);
+    border-radius: 10px;
+    background-color: white;
+    align-items: center;
+  }
+  .innercontainer:hover {
+    border: 1px solid rgb(1, 185, 245);
+  }
+  
+  
+  /* button */
+  .btnColor {
+    color: rgb(46, 46, 46);
+    border: 1px solid rgb(1, 185, 245);
+  }
+  .btnColor:hover {
+    color: rgb(255, 255, 255);
+    background-color: rgb(1, 185, 245);
+  }
+  .forgetpassword {
+    text-decoration: none;
+    font-size: 12px;
+    color: #0067b8;
+  }
+  .forgetpassword:hover{
+    text-decoration: underline;
+    font-size: 12px;
+    color: #0067b8;
+  }
+  .btnDisabled {
+    background-color: #f6f6f6;
+    color: #acacac;
+    border: 1px solid #d2d2d2;
+  }
+  .disabled {
+    cursor: not-allowed;
+  }
+  
+  
+  /* Inuput Fied*/
+  .inputField {
+    color: rgb(53, 53, 53);
+    border: 1px solid rgb(163, 163, 163);
+    background-color: rgb(255, 255, 255);
+    border-radius: 8px;
+  }
+  
+  /* forget-passowrd */
+  .forget-passowrd {
+    width: 100%;
+    text-align: right;
+  }
+  
+  /* logo */
+  .LogoImg {
+    width: 120px;
+    margin-bottom: 15px;
+  }
+  .logoContainer {
+    /* width: auto; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
