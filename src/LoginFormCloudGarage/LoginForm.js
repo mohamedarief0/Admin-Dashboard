@@ -10,7 +10,6 @@ function LoginForm() {
   const navigate = useNavigate();
   const handleSubmitted = async (values) => {
     const { email, password } = values;
-    // login with superadmin@gmail.com , Qwerty@1
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard/main");
@@ -36,7 +35,7 @@ function LoginForm() {
         <div className="logoContainer">
           <img className="LogoImg" src={LogoImg} alt="Cloud Garage logo" />
         </div>
-        <h4>Login</h4>
+        <h4 className="mb-4">Login</h4>
         <Form
           name="basic"
           style={{ maxWidth: 440 }}
