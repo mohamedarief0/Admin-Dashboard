@@ -24,6 +24,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import {
   createUserWithEmailAndPassword,
@@ -68,32 +69,41 @@ function AddUser() {
     Adduser: false,
   });
   const [selectAllCheckbox, setSelectAllCheckbox] = useState(false);
-  const [userList, setUserList] = useState([]); // each user from the data base to firebase
+  const [userList, setUserList] = useState([]); // each user from the data base firebase
   const [editMode, setEditMode] = useState(false); // State to track edit mode
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(false); // New loading state
 
-  const fetchUsers = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "Adminusers"));
+  // Real-time listener for users
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "Adminusers"), (snapshot) => {
       const users = [];
-      querySnapshot.forEach((doc) => {
-        users.push({ key: doc.id, ...doc.data() });
+      snapshot.forEach((doc) => {
+        const userData = doc.data();
+        users.push({
+          key: doc.id,
+          ...userData,
+          status: userData.status || "Closed", // Assuming default is Closed if status not set
+        });
       });
       setUserList(users);
-      // setUserRole(userList.role);
-    } catch (error) {
+    }, (error) => {
       console.error("Error fetching users:", error);
       message.error("Failed to fetch users. Please try again.");
-    }
-  };
+    });
+
+    return () => unsubscribe();
+  }, []);
+
 
   const fetchUserRole = async () => {
     try {
-      // Assuming the logged-in user's email is available in auth.currentUser.email
-      const email = auth.currentUser.email;
+      const email = auth.currentUser?.email;
+      if (!email) {
+        throw new Error("User not authenticated");
+      }
       const q = query(
         collection(db, "Adminusers"),
         where("email", "==", email)
@@ -102,6 +112,8 @@ function AddUser() {
       if (!querySnapshot.empty) {
         const userData = querySnapshot.docs[0].data();
         setUserRole(userData.role);
+      } else {
+        throw new Error("User role not found");
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
@@ -109,9 +121,14 @@ function AddUser() {
     }
   };
 
+
   useEffect(() => {
-    fetchUsers();
-    fetchUserRole();
+    const initialize = async () => {
+      setLoading(true);
+      await fetchUserRole();
+      setLoading(false);
+    };
+    initialize();
   }, []);
 
   const addUserToFirestore = async (userData) => {
@@ -128,7 +145,6 @@ function AddUser() {
       });
       console.log("User data added to Firestore with ID: ", docRef.id);
       message.success("User added successfully!");
-      fetchUsers(); // Fetch users after adding a new user
     } catch (error) {
       console.error("Error adding user data to Firestore: ", error);
       message.error("Failed to add user. Please try again.");
@@ -290,7 +306,7 @@ function AddUser() {
 
       if (fileList.length > 0) {
         const file = fileList[0].originFileObj;
-        const storageRef = ref(storage, `profilePhotos/${userId}`);
+        const storageRef = ref(storage, `DashboardAdminProfilePhotos/${userId}`);
         await uploadBytes(storageRef, file);
         const profilePhotoURL = await getDownloadURL(storageRef);
 
@@ -412,32 +428,9 @@ function AddUser() {
       key: "status",
       dataIndex: "status",
     },
-    // {
-    //   title: "Action",
-    //   key: "action",
-    //   render: (record) => (
-    //     <Space size="middle">
-    //       <a onClick={() => handleEdit(record)}>
-    //         <EditTwoTone />
-    //       </a>
-    //       <a onClick={() => showDeleteModel(record)}>
-    //         <DeleteTwoTone />
-    //       </a>
-    //     </Space>
-    //   ),
-    // },
     {
       title: "Actions",
-      key: "actions",render: (record) => (
-            <Space size="middle">
-              <a onClick={() => handleEdit(record)}>
-                <EditTwoTone />
-              </a>
-              <a onClick={() => showDeleteModel(record)}>
-                <DeleteTwoTone />
-              </a>
-            </Space>
-          ),
+      key: "actions",
       // Conditional rendering for Actions column
       render: (text, record) =>
         userRole === "Super Admin" ? (
@@ -460,7 +453,7 @@ function AddUser() {
 
       if (fileList.length > 0) {
         const file = fileList[0].originFileObj;
-        const storageRef = ref(storage, `profilePhotos/${userData.key}`);
+        const storageRef = ref(storage, `DashboardAdminProfilePhotos/${userData.key}`);
         await uploadBytes(storageRef, file);
         const profilePhotoURL = await getDownloadURL(storageRef);
         userData.profilePhoto = profilePhotoURL;
@@ -469,7 +462,7 @@ function AddUser() {
       await updateDoc(userRef, userData);
       console.log("User data updated in Firestore");
       message.success("User updated successfully!");
-      fetchUsers();
+     
     } catch (error) {
       console.error("Error updating user data in Firestore: ", error);
       message.error("Failed to update user. Please try again.");
@@ -478,7 +471,7 @@ function AddUser() {
 
   const handleEdit = (record) => {
     form.setFieldsValue(record);
-    fetchUsers();
+ 
     setUserData(record);
     setIndividualCheckboxes(
       record.permission.reduce((acc, permission) => {
@@ -510,20 +503,16 @@ function AddUser() {
   const handleDeleteUser = async () => {
     try {
       const key = selectedUser.key; // Get the key from the selectedUser object
-
       // Query Firestore to find the document with the matching key
       const userQuerySnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("key", "==", key))
       );
-
       if (!userQuerySnapshot.empty) {
         // Get the document ID of the user
         const docId = userQuerySnapshot.docs[0].id;
         const userData = userQuerySnapshot.docs[0].data();
-
         // Delete the user's document from Firestore
         await deleteDoc(doc(db, "Adminusers", docId));
-
         // Delete the user's authentication record
         const user = await signInWithEmailAndPassword(
           auth,
@@ -531,23 +520,20 @@ function AddUser() {
           userData.password
         );
         await deleteUser(user.user);
-
         // Delete the user's profile photo from Firebase Storage
-        const profilePhotoRef = ref(storage, `profilePhotos/${key}`);
+        const profilePhotoRef = ref(storage, `DashboardAdminProfilePhotos/${key}`);
         await deleteObject(profilePhotoRef);
-
         // Update userList state by removing the deleted user
         setUserList((prevUserList) =>
           prevUserList.filter((user) => user.key !== key)
         );
-
         message.success("User deleted successfully");
         setDeleteModalVisible(false);
       } else {
         console.error("User not found. Please try again.");
         message.error("Failed to delete user. User not found.");
       }
-      fetchUsers();
+    
     } catch (error) {
       console.error("Error deleting user:", error);
       message.error("Failed to delete user. Please try again.");
@@ -559,28 +545,53 @@ function AddUser() {
     setLoading(true); // Set loading to true when save changes process starts
     try {
       const key = userData.key; // Get the key from userData state
-
+      const userId = userData.userId; // Get the key from userData state
+  
       // Query Firestore to find the document with the matching key
       const userQuerySnapshot = await getDocs(
         query(collection(db, "Adminusers"), where("key", "==", key))
       );
-
+  
       if (!userQuerySnapshot.empty) {
         // Get the document ID of the user
         const docId = userQuerySnapshot.docs[0].id;
-
-        // Update the user's document with new data
-        await updateDoc(doc(db, "Adminusers", docId), {
+  
+        // Prepare the updated data object
+        const updatedData = {
           ...userData,
           permission: Object.keys(individualCheckboxes).filter(
             (key) => individualCheckboxes[key]
           ),
-        });
+        };
+        // const updatedUserData = { ...userData };
+
+        if (fileList.length > 0) {
+          const file = fileList[0];
+          const storageRef = ref(storage, `DashboardAdminProfilePhotos/${userId}`);
+          await uploadBytes(storageRef, file);
+          const profilePhotoURL = await getDownloadURL(storageRef);
+  
+          updatedData.profilePhoto = profilePhotoURL;
+        }
+        // Remove the password field if it's undefined
+        if (updatedData.password === undefined) {
+          delete updatedData.password;
+        }
+  
+        // Update the user's document with new data
+        await updateDoc(doc(db, "Adminusers", docId), updatedData);
+  
+        // Update the userData state with the new changes
+        setUserData((prevUserData) => ({
+          ...prevUserData,
+          ...updatedData,
+        }));
+  
         form.resetFields();
         message.success("Changes saved successfully!");
         setFileList([]);
         setEditMode(false); // Disable edit mode after saving changes
-        fetchUsers(); // featching user after editing
+       
         setIndividualCheckboxes({
           MainDashboard: false,
           PaymentTracking: false,
@@ -592,19 +603,18 @@ function AddUser() {
       } else {
         message.error("User not found. Please try again.");
       }
-
+  
       // Handle profile photo update
       if (fileList.length > 0 && fileList[0].originFileObj) {
         const newPhotoFile = fileList[0].originFileObj;
-
+  
         // If there is an old photo, delete it first
         if (userData.profilePhoto) {
           const oldPhotoRef = ref(storage, userData.profilePhoto);
           await deleteObject(oldPhotoRef);
         }
-
         // Upload the new photo
-        const storageRef = ref(storage, `profilePhotos/${userData.key}`);
+        const storageRef = ref(storage, `DashboardAdminProfilePhotos/${userData.key}`);
         await uploadBytes(storageRef, newPhotoFile);
         const newPhotoURL = await getDownloadURL(storageRef);
         userData.profilePhoto = newPhotoURL; // Update userData with the new photo URL
@@ -616,6 +626,7 @@ function AddUser() {
       setLoading(false); // Reset loading state after process completes
     }
   };
+  
 
   return (
     <div>
@@ -692,6 +703,7 @@ function AddUser() {
                 >
                   <Input prefix="" type="number" placeholder="Phone No" />
                 </Form.Item>
+                
                 <Form.Item
                   name="role"
                   rules={[{ required: true, message: "Please select Role!" }]}
@@ -711,11 +723,11 @@ function AddUser() {
                   }}
                   className="btn-span"
                 >
-                  <h6 className="me-3">User Permission:</h6>
+                  <h6 className="me-3 mt-1">User Permission:</h6>
                   <Checkbox
                     onChange={handleCheckboxChange}
                     checked={selectAllCheckbox}
-                    className="checkbox-text-color"
+                    className="checkbox-text-color d-flex align-items-center"
                   >
                     Select All
                   </Checkbox>
@@ -765,7 +777,7 @@ function AddUser() {
                     onChange={handleIndividualChange}
                     className="checkbox-text-color"
                   >
-                    Adduser
+                    user's
                   </Checkbox>
                 </div>
 
