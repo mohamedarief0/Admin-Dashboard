@@ -3,6 +3,8 @@ import "./MainDashboard.css";
 //icon
 import AddUserIcon from "../Asset/group-icon.svg";
 import { Button, Form, DatePicker, Card, Checkbox } from "antd";
+import { collection, doc, getDocs, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
 import LineChart from "../LineChart";
 
 function MainDashboard() {
@@ -11,19 +13,17 @@ function MainDashboard() {
   const config = {
     rules: [{ type: "object", required: true, message: "Please select date!" }],
   };
+
   //check box
   const onChange = (e) => {
     console.log(`checked = ${e.target.checked}`);
   };
+
   const [totalIncome, setTotalIncome] = useState({
     series: [
       {
-        name: "This Week",
-        data: [28, 29, 33, 36, 32, 32, 33],
-      },
-      {
-        name: "Last week",
-        data: [12, 11, 14, 18, 17, 13, 13],
+        name: "Platform Fees",
+        data: [], // Initial empty array for platform fees data
       },
     ],
     options: {
@@ -44,7 +44,7 @@ function MainDashboard() {
       },
       colors: ["#007BFE", "#05DFAD"],
       dataLabels: {
-        // enabled: true, // showin number in the line
+        enabled: true, // Show numbers in the line
       },
       stroke: {
         curve: "smooth",
@@ -54,9 +54,8 @@ function MainDashboard() {
         align: "left",
       },
       grid: {
-        // borderColor: " ", //this box chart box
         row: {
-          colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
+          colors: ["#f3f3f3", "transparent"], // Takes an array which will be repeated on columns
           opacity: 0.5,
         },
       },
@@ -64,17 +63,30 @@ function MainDashboard() {
         size: 2,
       },
       xaxis: {
-        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+        categories: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ],
         title: {
           text: "Month",
         },
       },
       yaxis: {
         title: {
-          // text: "Temperature",
+          // text: "Platform Fees",
         },
-        min: 5,
-        max: 40,
+        min: 0,
+        max: 40, // Default max value, will be updated
       },
       legend: {
         position: "top",
@@ -86,27 +98,119 @@ function MainDashboard() {
     },
   });
 
+  // Fetch data and update chart
+  // Function to process the document data
+  const processDocument = (doc, dateField, platformFeesByMonth) => {
+    const date = doc[dateField].toDate();
+    const month = date.getMonth();
+    platformFeesByMonth[month] += parseFloat(doc.platform) || 0;
+  };
+
+  useEffect(() => {
+    // Function to handle real-time updates
+    const fetchPlatformFees = async () => {
+      try {
+        const platformFeesByMonth = Array(12).fill(0);
+
+        // Listener for ticketBuyerDetails collection
+        const unsubscribeTicketBuyerDetails = onSnapshot(
+          collection(db, "ticketBuyerDetails"),
+          (snapshot) => {
+            snapshot.docs.forEach((doc) =>
+              processDocument(
+                doc.data(),
+                "currentDateTime",
+                platformFeesByMonth
+              )
+            );
+            updateChart(platformFeesByMonth);
+          }
+        );
+
+        // Listener for successPaymentUploader collection
+        const unsubscribeSuccessPaymentUploader = onSnapshot(
+          collection(db, "successPaymentUploader"),
+          (snapshot) => {
+            snapshot.docs.forEach((doc) =>
+              processDocument(
+                doc.data(),
+                "uploaderPayDate",
+                platformFeesByMonth
+              )
+            );
+            updateChart(platformFeesByMonth);
+          }
+        );
+
+        // Clean up the listeners when the component unmounts
+        return () => {
+          unsubscribeTicketBuyerDetails();
+          unsubscribeSuccessPaymentUploader();
+        };
+      } catch (error) {
+        console.error("Error fetching platform fees data: ", error);
+      }
+    };
+
+    const updateChart = (platformFeesByMonth) => {
+      const maxPlatformFee = Math.max(...platformFeesByMonth) + 10;
+      setTotalIncome((prevState) => ({
+        ...prevState,
+        series: [
+          {
+            ...prevState.series[0],
+            data: platformFeesByMonth,
+          },
+        ],
+        options: {
+          ...prevState.options,
+          yaxis: {
+            ...prevState.options.yaxis,
+            max: maxPlatformFee,
+          },
+        },
+      }));
+    };
+
+    fetchPlatformFees();
+  }, []);
+
   // totalIncomeDonut below the total icome card
   const [totalIncomeDonut, setTotalIncomeDonut] = useState({
     series: [44, 55],
     options: {
-      // plotOptions: {
-      //   pie: {
-      //     donut: {
-      //       labels: {
-      //         show: true,
-      //         name: "Total",
-      //         value: 80,
-      //       },
-      //     },
-      //   },
-      // },
       chart: {
         type: "donut",
       },
+      plotOptions: {
+        pie: {
+          donut: {
+            labels: {
+              show: true,
+              showAlways: true,
+              name: {
+                showAlways: true,
+                color: "#333",
+                offsetY: 15,
+                formatter: function (val) {
+                  return "Sports";
+                },
+              },
+              value: {
+                showAlways: true,
+                color: "#333",
+                offsetY: -15,
+                formatter: function (val) {
+                  return val;
+                },
+              },
+            },
+          },
+        },
+      },
       responsive: [
         {
-          breakpoint: 480,
+          breakpoint: 380,
           options: {
             chart: {
               width: 280,
@@ -117,7 +221,7 @@ function MainDashboard() {
           },
         },
       ],
-      labels: ["This week", "Last week"],
+      labels: ["Week", "Month"],
     },
   });
 
@@ -125,12 +229,8 @@ function MainDashboard() {
   const [uploadTicket, setUploadTicket] = useState({
     series: [
       {
-        name: "This Month",
-        data: [28, 29, 33, 36, 32, 32, 33],
-      },
-      {
-        name: "Last Month",
-        data: [12, 11, 14, 18, 17, 13, 13],
+        name: "Month",
+        data: [],
       },
     ],
     options: {
@@ -151,7 +251,7 @@ function MainDashboard() {
       },
       colors: ["#007BFE", "#05DFAD"],
       dataLabels: {
-        // enabled: true, // showin number in the line
+        enabled: true,
       },
       stroke: {
         curve: "smooth",
@@ -161,9 +261,8 @@ function MainDashboard() {
         align: "left",
       },
       grid: {
-        // borderColor: " ", //this box chart box
         row: {
-          colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
+          colors: ["#f7f7f7", "transparent"],
           opacity: 0.5,
         },
       },
@@ -171,15 +270,25 @@ function MainDashboard() {
         size: 2,
       },
       xaxis: {
-        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+        categories: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ],
         title: {
           text: "Month",
         },
       },
       yaxis: {
-        title: {
-          // text: "Temperature",
-        },
         min: 0,
         max: 40,
       },
@@ -193,16 +302,194 @@ function MainDashboard() {
     },
   });
 
-  // Overall Download Ticket line chart
+  // Fetch upload ticket data from Firestore
+  useEffect(() => {
+    const fetchTicketData = async () => {
+      try {
+        const ticketDetailsCollection = collection(db, "ticketDetails");
+        const sportTicketDetailsCollection = collection(
+          db,
+          "sportTicketDetails"
+        );
+
+        const [ticketDetailsSnapshot, sportTicketDetailsSnapshot] =
+          await Promise.all([
+            getDocs(ticketDetailsCollection),
+            getDocs(sportTicketDetailsCollection),
+          ]);
+
+        const ticketDetailsList = ticketDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+        const sportTicketDetailsList = sportTicketDetailsSnapshot.docs.map(
+          (doc) => doc.data()
+        );
+
+        const ticketCounts = Array(12).fill(0);
+
+        ticketDetailsList.forEach((ticket) => {
+          if (ticket?.currentDateTime?.seconds) {
+            const monthIndex = new Date(
+              ticket.currentDateTime.seconds * 1000
+            ).getMonth();
+            ticketCounts[monthIndex] += parseInt(ticket.totalTicketCount, 10);
+          }
+        });
+
+        sportTicketDetailsList.forEach((ticket) => {
+          if (ticket?.currentDateTime?.seconds) {
+            const monthIndex = new Date(
+              ticket.currentDateTime.seconds * 1000
+            ).getMonth();
+            ticketCounts[monthIndex] += parseInt(
+              ticket.totalSPortsTicketCount,
+              10
+            );
+          }
+        });
+
+        const maxTicketCount = Math.ceil(Math.max(...ticketCounts));
+
+        setUploadTicket((prevState) => ({
+          ...prevState,
+          series: [
+            {
+              ...prevState.series[0],
+              data: ticketCounts,
+            },
+          ],
+          options: {
+            ...prevState.options,
+            yaxis: {
+              ...prevState.options.yaxis,
+              max: maxTicketCount + 10,
+            },
+          },
+        }));
+      } catch (error) {
+        console.error("Error fetching ticket data: ", error);
+      }
+    };
+
+    // Initial fetch
+    fetchTicketData();
+
+    // Real-time listener setup
+    const ticketDetailsCollection = collection(db, "TicketDetails");
+    const sportTicketDetailsCollection = collection(db, "sportsTicketDetails");
+
+    const unsubscribeTicketDetails = onSnapshot(
+      ticketDetailsCollection,
+      (snapshot) => {
+        const ticketDetailsList = snapshot.docs.map((doc) => doc.data());
+        const ticketCounts = Array(12).fill(0);
+
+        ticketDetailsList.forEach((ticket) => {
+          if (ticket?.currentDateTime?.seconds) {
+            const monthIndex = new Date(
+              ticket.currentDateTime.seconds * 1000
+            ).getMonth();
+            ticketCounts[monthIndex] += parseInt(ticket.totalTicketCount, 10);
+          }
+        });
+
+        setUploadTicket((prevState) => {
+          const combinedCounts = [...prevState.series[0].data];
+          combinedCounts.forEach((count, index) => {
+            combinedCounts[index] =
+              ticketCounts[index] + (combinedCounts[index] || 0);
+          });
+
+          const maxTicketCount = Math.ceil(Math.max(...combinedCounts));
+
+          return {
+            ...prevState,
+            series: [
+              {
+                ...prevState.series[0],
+                data: combinedCounts,
+              },
+            ],
+            options: {
+              ...prevState.options,
+              yaxis: {
+                ...prevState.options.yaxis,
+                max: maxTicketCount + 10,
+              },
+            },
+          };
+        });
+      }
+    );
+
+    const unsubscribeSportTicketDetails = onSnapshot(
+      sportTicketDetailsCollection,
+      (snapshot) => {
+        const sportTicketDetailsList = snapshot.docs.map((doc) => doc.data());
+        const sportTicketCounts = Array(12).fill(0);
+
+        sportTicketDetailsList.forEach((ticket) => {
+          if (ticket?.currentDateTime?.seconds) {
+            const monthIndex = new Date(
+              ticket.currentDateTime.seconds * 1000
+            ).getMonth();
+            sportTicketCounts[monthIndex] += parseInt(
+              ticket.totalSPortsTicketCount,
+              10
+            );
+          }
+        });
+
+        setUploadTicket((prevState) => {
+          const combinedCounts = [...prevState.series[0].data];
+          combinedCounts.forEach((count, index) => {
+            combinedCounts[index] =
+              sportTicketCounts[index] + (combinedCounts[index] || 0);
+          });
+
+          const maxTicketCount = Math.ceil(Math.max(...combinedCounts));
+
+          return {
+            ...prevState,
+            series: [
+              {
+                ...prevState.series[0],
+                data: combinedCounts,
+              },
+            ],
+            options: {
+              ...prevState.options,
+              yaxis: {
+                ...prevState.options.yaxis,
+                max: maxTicketCount + 10,
+              },
+            },
+          };
+        });
+      }
+    );
+
+    return () => {
+      unsubscribeTicketDetails();
+      unsubscribeSportTicketDetails();
+    };
+  }, []);
+
+  // Helper function to format Firestore timestamp to month for overall download ticket
+  const getMonthName = (timestamp) => {
+    const date = new Date(timestamp.seconds * 1000);
+    return date.toLocaleString("default", { month: "short" });
+  };
+
   const [downloadTicket, setDownloadTicket] = useState({
     series: [
+      // {
+      //   name: "Week",
+      //   data: [],
+      // },
       {
-        name: "This Month",
-        data: [28, 29, 33, 36, 32, 32, 33],
-      },
-      {
-        name: "Last Month",
-        data: [12, 23, 14, 30, 17, 33, 13],
+        name: "Month",
+        data: [],
       },
     ],
     options: {
@@ -223,7 +510,7 @@ function MainDashboard() {
       },
       colors: ["#A804FF", "#3CD856"],
       dataLabels: {
-        // enabled: true, // showin number in the line
+        enabled: true, // showing number in the line
       },
       stroke: {
         curve: "smooth",
@@ -233,9 +520,8 @@ function MainDashboard() {
         align: "left",
       },
       grid: {
-        // borderColor: " ", //this box chart box
         row: {
-          colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
+          colors: ["#f3f3f3", "transparent"],
           opacity: 0.5,
         },
       },
@@ -243,15 +529,25 @@ function MainDashboard() {
         size: 2,
       },
       xaxis: {
-        categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+        categories: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ],
         title: {
           text: "Month",
         },
       },
       yaxis: {
-        title: {
-          // text: "Temperature",
-        },
         min: 0,
         max: 40,
       },
@@ -264,10 +560,103 @@ function MainDashboard() {
       },
     },
   });
+  // Fetch Buyer ticket data from Firestore
+  useEffect(() => {
+    const fetchTicketData = async () => {
+      try {
+        const ticketDetailsCollection = collection(db, "ticketBuyerDetails");
+        const ticketDetailsSnapshot = await getDocs(ticketDetailsCollection);
+        const ticketDetailsList = ticketDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+
+        const ticketCounts = Array(12).fill(0);
+
+        ticketDetailsList.forEach((ticket) => {
+          const monthIndex = new Date(
+            ticket.currentDateTime.seconds * 1000
+          ).getMonth();
+          if (ticket.ticketCount) {
+            ticketCounts[monthIndex] += ticket.ticketCount;
+          }
+          if (ticket.sportsTicketCount) {
+            ticketCounts[monthIndex] += ticket.sportsTicketCount;
+          }
+        });
+
+        const maxTicketCount = Math.ceil(Math.max(...ticketCounts));
+
+        setDownloadTicket((prevState) => ({
+          ...prevState,
+          series: [
+            {
+              ...prevState.series[0],
+              data: ticketCounts,
+            },
+          ],
+          options: {
+            ...prevState.options,
+            yaxis: {
+              ...prevState.options.yaxis,
+              max: maxTicketCount + 10,
+            },
+          },
+        }));
+      } catch (error) {
+        console.error("Error fetching ticket data: ", error);
+      }
+    };
+
+    // Initial fetch
+    fetchTicketData();
+
+    // Real-time listener setup
+    const ticketDetailsCollection = collection(db, "ticketBuyerDetails");
+    const unsubscribe = onSnapshot(ticketDetailsCollection, (snapshot) => {
+      const ticketDetailsList = snapshot.docs.map((doc) => doc.data());
+
+      const ticketCounts = Array(12).fill(0);
+
+      ticketDetailsList.forEach((ticket) => {
+        const monthIndex = new Date(
+          ticket.currentDateTime.seconds * 1000
+        ).getMonth();
+        if (ticket.ticketCount) {
+          ticketCounts[monthIndex] += ticket.ticketCount;
+        }
+        if (ticket.sportsTicketCount) {
+          ticketCounts[monthIndex] += ticket.sportsTicketCount;
+        }
+      });
+
+      const maxTicketCount = Math.ceil(Math.max(...ticketCounts));
+
+      setDownloadTicket((prevState) => ({
+        ...prevState,
+        series: [
+          {
+            ...prevState.series[0],
+            data: ticketCounts,
+          },
+        ],
+        options: {
+          ...prevState.options,
+          yaxis: {
+            ...prevState.options.yaxis,
+            max: maxTicketCount + 10,
+          },
+        },
+      }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Overall Ticket details semi Circle gauge chart
   const [overallTicketDetails, setOverallTicketDetails] = useState({
-    series: [76],
+    series: [], // Initial value
     options: {
       chart: {
         type: "radialBar",
@@ -324,10 +713,133 @@ function MainDashboard() {
     },
   });
 
+  const [ticketCounts, setTicketCounts] = useState({
+    sold: 0,
+    remaining: 0,
+    notSold: 0,
+  });
+
+  const [activeButton, setActiveButton] = useState("sold");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const ticketDetailsSnapshot = await getDocs(
+          collection(db, "TicketDetails")
+        );
+        const sportTicketDetailsSnapshot = await getDocs(
+          collection(db, "sportsTicketDetails")
+        );
+        const buyerDetailsSnapshot = await getDocs(
+          collection(db, "ticketBuyerDetails")
+        );
+
+        if (
+          !ticketDetailsSnapshot ||
+          !sportTicketDetailsSnapshot ||
+          !buyerDetailsSnapshot
+        ) {
+          throw new Error("Failed to fetch data from Firebase");
+        }
+
+        const ticketDetails = ticketDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+        const sportTicketDetails = sportTicketDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+        const buyerTicketDetails = buyerDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+
+        const currentTime = new Date();
+
+        // Calculate sold ticket count
+        const soldTicketCount =
+          buyerTicketDetails.reduce((acc, ticket) => {
+            return acc + parseInt(ticket.ticketCount);
+          }, 10) +
+            buyerTicketDetails.reduce((acc, ticket) => {
+              return acc + parseInt(ticket.sportsTicketCount);
+            }, 10);
+        console.log("MT", parseInt(buyerDetailsSnapshot.ticketCount));
+        console.log("ST", parseInt(buyerDetailsSnapshot.sportsTicketCount));
+        // Calculate remaining ticket count
+        const remainingTicketCount =
+          ticketDetails.reduce((acc, ticket) => {
+            const showTime = new Date(ticket.showTime.seconds * 1000);
+            if (showTime > currentTime) {
+              return acc + parseInt(ticket.ticketCount, 10);
+            }
+            return acc;
+          }, 0) +
+          sportTicketDetails.reduce((acc, ticket) => {
+            const matchTime = new Date(ticket.matchTime.seconds * 1000);
+            if (matchTime > currentTime) {
+              return acc + parseInt(ticket.sportsTicketCount, 10);
+            }
+            return acc;
+          }, 0);
+
+        // Calculate not sold ticket count
+        console.log("R", remainingTicketCount);
+        const notSoldTicketCount =
+          ticketDetails.reduce((acc, ticket) => {
+            const showTime = new Date(ticket.showTime.seconds * 1000);
+            if (showTime < currentTime) {
+              return acc + parseInt(ticket.ticketCount, 10);
+            }
+            return acc;
+          }, 0) +
+          sportTicketDetails.reduce((acc, ticket) => {
+            const matchTime = new Date(ticket.matchTime.seconds * 1000);
+            if (matchTime < currentTime) {
+              return acc + parseInt(ticket.sportsTicketCount, 10);
+            }
+            return acc;
+          }, 0);
+
+        // const totalTicketCount = soldTicketCount + remainingTicketCount + notSoldTicketCount;
+
+        // const soldPercentage = (soldTicketCount / totalTicketCount) * 100;
+        // const remainingPercentage = (remainingTicketCount / totalTicketCount) * 100;
+        // const notSoldPercentage = (notSoldTicketCount / totalTicketCount) * 100;
+        setTicketCounts({
+          sold: soldTicketCount,
+          remaining: remainingTicketCount,
+          notSold: notSoldTicketCount,
+        });
+
+        // Initialize with sold tickets data
+        setOverallTicketDetails((prevDetails) => ({
+          ...prevDetails,
+          series: [soldTicketCount],
+        }));
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const updateChart = (type) => {
+    setActiveButton(type);
+    const seriesValue =
+      type === "sold"
+        ? ticketCounts.sold
+        : type === "remaining"
+        ? ticketCounts.remaining
+        : ticketCounts.notSold;
+
+    setOverallTicketDetails((prevDetails) => ({
+      ...prevDetails,
+      series: [seriesValue],
+    }));
+  };
   // Overall details
-  // 2nD Row Movie donut
   const [movie, setMovie] = useState({
-    series: [20, 35, 5, 40],
+    series: [],
     options: {
       chart: {
         type: "donut",
@@ -340,7 +852,6 @@ function MainDashboard() {
               showAlways: true,
               name: {
                 showAlways: true,
-                // show: true,
                 color: "#333",
                 offsetY: 15,
                 formatter: function (val) {
@@ -349,11 +860,10 @@ function MainDashboard() {
               },
               value: {
                 showAlways: true,
-                // show: true,
                 color: "#333",
                 offsetY: -15,
                 formatter: function (val) {
-                  return "100";
+                  return val;
                 },
               },
             },
@@ -373,14 +883,61 @@ function MainDashboard() {
           },
         },
       ],
-      labels: ["Download", "Sold", "Upload", "Remaining"],
+      labels: ["Download", "Not sold", "Upload", "Remaining"],
       colors: ["#1486FF", "#05DFAD", "#BFDEFF", "#0C0815"],
     },
   });
-  
+
+  useEffect(() => {
+    const fetchMovieData = async () => {
+      try {
+        const ticketDetailsCollection = collection(db, "TicketDetails");
+        const ticketDetailsSnapshot = await getDocs(ticketDetailsCollection);
+        const ticketDetailsList = ticketDetailsSnapshot.docs.map((doc) =>
+          doc.data()
+        );
+
+        let downloadCount = 0;
+        let notSoldCount = 0;
+        let uploadCount = 0;
+        let remainingCount = 0;
+        const currentTime = new Date(); // Current time
+
+        ticketDetailsList.forEach((ticket) => {
+          const showTime = new Date(ticket.showTime.seconds * 1000); // Convert Firestore timestamp to Date object
+          const totalTicketCount = parseInt(ticket.totalTicketCount, 10);
+          const ticketCount = parseInt(ticket.ticketCount, 10);
+
+          // Calculate download count and upload count
+          downloadCount += totalTicketCount - ticketCount;
+          uploadCount += totalTicketCount;
+
+          if (showTime < currentTime) {
+            // If show time has passed, count as not sold
+            notSoldCount += ticketCount;
+          } else {
+            // If show time has not passed, consider the ticket count as remaining
+            remainingCount +=
+              totalTicketCount - (totalTicketCount - ticket.ticketCount);
+          }
+        });
+        setMovie((prevState) => ({
+          ...prevState,
+          series: [downloadCount, notSoldCount, uploadCount, remainingCount],
+        }));
+      } catch (error) {
+        console.error("Error fetching ticket data: ", error);
+      }
+    };
+
+    fetchMovieData();
+  }, []);
+
+  // remainingCount =(ticketCount + notSoldCount)-ticketCount;
+
   // 2nD Row sports donut
-  const [sports, setsports] = useState({
-    series: [20, 35, 5, 40],
+  const [sports, setSports] = useState({
+    series: [],
     options: {
       chart: {
         type: "donut",
@@ -393,20 +950,18 @@ function MainDashboard() {
               showAlways: true,
               name: {
                 showAlways: true,
-                // show: true,
                 color: "#333",
                 offsetY: 15,
                 formatter: function (val) {
-                  return "sports";
+                  return "Sports";
                 },
               },
               value: {
                 showAlways: true,
-                // show: true,
                 color: "#333",
                 offsetY: -15,
                 formatter: function (val) {
-                  return "100";
+                  return val;
                 },
               },
             },
@@ -426,41 +981,95 @@ function MainDashboard() {
           },
         },
       ],
-      labels: ["Download", "sold", "upload", "Remaining"], // Set the labels for each series
+      labels: ["Download", "Not sold", "Upload", "Remaining"],
       colors: ["#1486FF", "#05DFAD", "#BFDEFF", "#0C0815"],
     },
   });
-  //State for range picker value
-  const [rangeValue, setRangeValue] = useState([]);
-  const [totalIncomeData, setTotalIncomeData] = useState([]);
 
-  // Range picker change handler
-  const onRangePickerChange = (value, dateString) => {
-    console.log("Selected Range: ", dateString);
-    setRangeValue(value);
-    // Fetch data for Total income based on selected date range
-    fetchData(dateString);
+  useEffect(() => {
+    const fetchSportsData = async () => {
+      try {
+        const sportsTicketDetailsCollection = collection(
+          db,
+          "sportsTicketDetails"
+        );
+        const sportsTicketDetailsSnapshot = await getDocs(
+          sportsTicketDetailsCollection
+        );
+        const sportsTicketDetailsList = sportsTicketDetailsSnapshot.docs.map(
+          (doc) => doc.data()
+        );
+
+        let downloadCount = 0;
+        let notSoldCount = 0;
+        let uploadCount = 0;
+        let remainingCount = 0;
+
+        const currentTime = new Date();
+
+        sportsTicketDetailsList.forEach((ticket) => {
+          const matchTime = new Date(ticket.matchTime.seconds * 1000);
+          const totalSportsTicketCount = parseInt(
+            ticket.totalSPortsTicketCount,
+            10
+          );
+          const sportsTicketCount = parseInt(ticket.sportsTicketCount, 10);
+
+          downloadCount =
+            downloadCount + (totalSportsTicketCount - sportsTicketCount);
+          uploadCount = uploadCount + totalSportsTicketCount;
+          // remainingCount = remainingCount + sportsTicketCount;
+
+          if (matchTime < currentTime) {
+            notSoldCount += sportsTicketCount;
+          } else {
+            remainingCount =
+              totalSportsTicketCount -
+              (totalSportsTicketCount - sportsTicketCount);
+          }
+        });
+
+        setSports((prevState) => ({
+          ...prevState,
+          series: [downloadCount, notSoldCount, uploadCount, remainingCount],
+        }));
+      } catch (error) {
+        console.error("Error fetching sports ticket data: ", error);
+      }
+    };
+
+    fetchSportsData();
+  }, []);
+
+  // over details is bank account given details from the collection "UploaderAccountDetails"
+  const [uploaderCount, setUploaderCount] = useState(0); //"UploaderAccountDetails collection name"
+  const [downloaderCount, setDownloaderCount] = useState(0); //"ticketBuyerDetails collection name"
+
+  const getDocumentCount = async (collectionName) => {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    return querySnapshot.size;
   };
 
-  const fetchData = async (dateString) => {
-    // Your API call or data fetching logic here
-    // Example:
-    // const response = await fetch(`your-api-url?start_date=${dateString[0]}&end_date=${dateString[1]}`);
-    // const data = await response.json();
-    // setTotalIncomeData(data);
-    // For now, setting dummy data
-    setTotalIncomeData([
-      { name: "This Week", data: [28, 29, 33, 36, 32, 32, 33] },
-      { name: "Last week", data: [12, 11, 14, 18, 17, 13, 13] }
-    ]);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const uploaderCount = await getDocumentCount("UploaderAccountDetails");
+      const downloaderCount = await getDocumentCount("ticketBuyerDetails");
+      setUploaderCount(uploaderCount);
+      setDownloaderCount(downloaderCount);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <>
       {/* Heading title  */}
       <div className="d-flex justify-content-between align-items-center">
         <h3 className="payment-title">Main DashBoard</h3>
         <Form.Item name="date-picker" {...config}>
-          <DatePicker size="large" />
+          <RangePicker
+            style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
+          />
         </Form.Item>
       </div>
 
@@ -471,14 +1080,13 @@ function MainDashboard() {
           <div className="d-flex justify-content-between">
             <h6>Today Activity </h6>
             <RangePicker
-              value={rangeValue}
-              onChange={onRangePickerChange}
               style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
             />
           </div>
           {/* Total main Line grid div */}
           <div className="mt-3">
             <LineChart
+              className="line-chart-container"
               data={totalIncome}
               type="line"
               width={380}
@@ -499,7 +1107,9 @@ function MainDashboard() {
         <Card className="item item-2">
           <div className="d-flex justify-content-between">
             <h6>Today Activity</h6>
-            <DatePicker />
+            <RangePicker
+              style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
+            />
           </div>
           <div className="mt-3">
             <LineChart
@@ -512,11 +1122,18 @@ function MainDashboard() {
         </Card>
 
         {/* right side 2-Counter Uploder, downloader */}
-        <div className="item item-3">
-          <Card className="card-container-bg">
+        <Card className="justify-content-around item item-3">
+          <div className="card-container-bg p-4 rounded-3 w-100">
             <div className="d-flex justify-content-between">
               <h6>Ticket uploder user </h6>
-              <DatePicker />
+              <RangePicker
+                style={{
+                  width: 180,
+                  height: 28,
+                  fontSize: 12,
+                  padding: "16px",
+                }}
+              />
             </div>
             <div className="d-flex align-items-center">
               <img
@@ -526,14 +1143,21 @@ function MainDashboard() {
                 className="Adduser-img"
                 alt=""
               />
-              <h2 className="ms-3">100</h2>
+              <h2 className="ms-3">{uploaderCount}</h2>
             </div>
-          </Card>
+          </div>
 
-          <Card className="card-container-bg mt-2">
+          <div className="card-container-bg mt-4 p-4 rounded-3 w-100">
             <div className="d-flex justify-content-between">
               <h6>Ticket downloader user </h6>
-              <DatePicker />
+              <RangePicker
+                style={{
+                  width: 180,
+                  height: 28,
+                  fontSize: 12,
+                  padding: "16px",
+                }}
+              />
             </div>
             <div className="d-flex align-items-center">
               <img
@@ -543,22 +1167,25 @@ function MainDashboard() {
                 className="Adduser-img"
                 alt=""
               />
-              <h2 className="ms-3">100</h2>
+              <h2 className="ms-3">{downloaderCount}</h2>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
         {/* Overall Download card chart */}
         <Card className="item item-4">
           <div className="d-flex justify-content-between">
-            <h6>Today Activity</h6>
-            <DatePicker />
+            <h6>Today Activity </h6>
+            <RangePicker
+              style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
+            />
           </div>
           <div className="d-flex align-items-center mt-3">
             <LineChart
               data={downloadTicket}
               type="line"
               width={380}
+              className="line-chart-container"
               height={280}
             />
           </div>
@@ -568,7 +1195,7 @@ function MainDashboard() {
         <Card className="item item-5">
           <div className="d-flex justify-content-between">
             <h6>Overall Ticket Details</h6>
-            <DatePicker />
+            <DatePicker onChange={onChange} picker="month" />
           </div>
           <div className="mt-3">
             <p>This month</p>
@@ -579,13 +1206,28 @@ function MainDashboard() {
             />
           </div>
           <div className="d-flex align-items-center justify-content-between mt-5">
-            <Button size="small" type="primary">
+            <Button
+              size="small"
+              type="default"
+              onClick={() => updateChart("sold")}
+              className={activeButton === "sold" ? "active" : ""}
+            >
               Sold ticket
             </Button>
-            <Button size="small" type="default">
+            <Button
+              size="small"
+              type="default"
+              className={activeButton === "remaining" ? "active" : ""}
+              onClick={() => updateChart("remaining")}
+            >
               Remaining Ticket
             </Button>
-            <Button size="small" type="default">
+            <Button
+              size="small"
+              type="default"
+              className={activeButton === "notSold" ? "active" : ""}
+              onClick={() => updateChart("notSold")}
+            >
               Not sold Ticket
             </Button>
           </div>
@@ -597,12 +1239,28 @@ function MainDashboard() {
       <div>
         <div className="d-flex justify-content-between mt-5 payment-title">
           <h3 className="">Overall details</h3>
-          <DatePicker />
+          <RangePicker
+            style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
+          />
         </div>
         <div className="overall-details">
           <LineChart data={movie} type="donut" width={320} />
           <LineChart data={sports} type="donut" width={320} />
-          <LineChart data={totalIncomeDonut} type="donut" width={320} />
+          <div
+            style={{
+              width: 150,
+              height: 150,
+              border: "15px solid black",
+              borderRadius: "50%",
+            }}
+          >
+            <p className="d-flex justify-content-center align-items-center h-100">
+              {" "}
+              Event column{" "}
+            </p>
+          </div>
+          {/* This chart is for events */}
+          {/* <LineChart data={totalIncomeDonut} type="donut" width={320} /> */}
         </div>
       </div>
     </>

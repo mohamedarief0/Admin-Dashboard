@@ -11,23 +11,19 @@
 /* Parent grind  */
 .main-grid-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(390px, 1fr)); /* Use auto-fit with minmax */
   gap: 10px;
-  width: auto;
-  /* grid-template-rows: repeat(2, 200px); */
+  width: 100%;
 }
-
 /* gird child  */
 .item-1 {
   grid-row: span 2;
 }
-.item-2 {
-}
-.item-3 {
-}
-.item-4 {
-}
 
+.item-2, .item-3, .item-4, .item-5 {
+  width: 100%; 
+  height: 100%;
+}
 
 /* 2nd row */
 .overall-details{
@@ -37,4 +33,19 @@
   background-color: white;
   border-radius: 5px;
   padding: 24px;
+}
+.active{
+  background-color: dodgerblue;
+  color: white;
+}
+/* Media query for responsive LineChart */
+@media (max-width: 768px) {
+  .line-chart-container {
+    width: 100%;
+  }
+}
+@media (min-width: 769px) {
+  .line-chart-container {
+    width: 380px;
+  }
 }
