@@ -6,9 +6,26 @@
   width: 250px;
 }
 
-:where(.css-dev-only-do-not-override-17seli4).ant-layout.ant-layout-sider-trigger {
-  /* color: #606060 !important; */
-  background: white !important;
+.ant-menu-item-selected {
+  background-color: #02b9f5 !important;
+  color: white !important;
+  border-radius: 0px 120px 120px 0px !important;
 }
 
+.ant-menu-item-selected .anticon {
+  color: white !important;
+}
 
+.ant-menu-item-selected img {
+  filter: brightness(0) invert(1);
+  color: white;
+}
+
+.ant-menu-item-selected:hover {
+  color: white !important;
+}
+
+.ant-menu-item:hover {
+  /* background-color: #e5f8fe !important; */
+  border-radius: 0 120px 120px 0 !important;
+}
