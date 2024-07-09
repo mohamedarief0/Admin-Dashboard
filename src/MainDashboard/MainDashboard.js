@@ -153,7 +153,8 @@ function MainDashboard() {
     };
 
     const updateChart = (platformFeesByMonth) => {
-      const maxPlatformFee = Math.max(...platformFeesByMonth) + 10;
+      const maxPlatformFee =
+        Math.floor(Math.max(...platformFeesByMonth).toFixed(0)) + 10;
       setTotalIncome((prevState) => ({
         ...prevState,
         series: [
@@ -232,6 +233,10 @@ function MainDashboard() {
         name: "Month",
         data: [],
       },
+      {
+        name: "week",
+        data: [],
+      },
     ],
     options: {
       chart: {
@@ -302,77 +307,90 @@ function MainDashboard() {
     },
   });
 
-  // Fetch upload ticket data from Firestore
-  useEffect(() => {
-    const fetchTicketData = async () => {
-      try {
-        const ticketDetailsCollection = collection(db, "ticketDetails");
-        const sportTicketDetailsCollection = collection(
-          db,
-          "sportTicketDetails"
+  const [selectedDateRange, setSelectedDateRange] = useState([null, null]);
+
+  const filterByDateRange = (dataList, startDate, endDate) => {
+    return dataList.filter((data) => {
+      const dataDate = new Date(data.currentDateTime.seconds * 1000);
+      return dataDate >= startDate && dataDate <= endDate;
+    });
+  };
+
+  const fetchTicketData = async (startDate, endDate) => {
+    try {
+      const ticketDetailsCollection = collection(db, "ticketDetails");
+      const sportTicketDetailsCollection = collection(db, "sportTicketDetails");
+
+      const [ticketDetailsSnapshot, sportTicketDetailsSnapshot] =
+        await Promise.all([
+          getDocs(ticketDetailsCollection),
+          getDocs(sportTicketDetailsCollection),
+        ]);
+
+      let ticketDetailsList = ticketDetailsSnapshot.docs.map((doc) =>
+        doc.data()
+      );
+      let sportTicketDetailsList = sportTicketDetailsSnapshot.docs.map((doc) =>
+        doc.data()
+      );
+
+      if (startDate && endDate) {
+        ticketDetailsList = filterByDateRange(ticketDetailsList, startDate, endDate);
+        sportTicketDetailsList = filterByDateRange(
+          sportTicketDetailsList,
+          startDate,
+          endDate
         );
+      }
 
-        const [ticketDetailsSnapshot, sportTicketDetailsSnapshot] =
-          await Promise.all([
-            getDocs(ticketDetailsCollection),
-            getDocs(sportTicketDetailsCollection),
-          ]);
+      const ticketCounts = Array(12).fill(0);
 
-        const ticketDetailsList = ticketDetailsSnapshot.docs.map((doc) =>
-          doc.data()
-        );
-        const sportTicketDetailsList = sportTicketDetailsSnapshot.docs.map(
-          (doc) => doc.data()
-        );
-
-        const ticketCounts = Array(12).fill(0);
-
-        ticketDetailsList.forEach((ticket) => {
-          if (ticket?.currentDateTime?.seconds) {
-            const monthIndex = new Date(
-              ticket.currentDateTime.seconds * 1000
-            ).getMonth();
+      ticketDetailsList.forEach((ticket) => {
+        if (ticket?.currentDateTime?.seconds) {
+          const ticketDate = new Date(ticket.currentDateTime.seconds * 1000);
+          if (ticketDate.getFullYear() === startDate.getFullYear()) {
+            const monthIndex = ticketDate.getMonth();
             ticketCounts[monthIndex] += parseInt(ticket.totalTicketCount, 10);
           }
-        });
+        }
+      });
 
-        sportTicketDetailsList.forEach((ticket) => {
-          if (ticket?.currentDateTime?.seconds) {
-            const monthIndex = new Date(
-              ticket.currentDateTime.seconds * 1000
-            ).getMonth();
-            ticketCounts[monthIndex] += parseInt(
-              ticket.totalSPortsTicketCount,
-              10
-            );
+      sportTicketDetailsList.forEach((ticket) => {
+        if (ticket?.currentDateTime?.seconds) {
+          const ticketDate = new Date(ticket.currentDateTime.seconds * 1000);
+          if (ticketDate.getFullYear() === startDate.getFullYear()) {
+            const monthIndex = ticketDate.getMonth();
+            ticketCounts[monthIndex] += parseInt(ticket.totalSPortsTicketCount, 10);
           }
-        });
+        }
+      });
 
-        const maxTicketCount = Math.ceil(Math.max(...ticketCounts));
+      const maxTicketCount = Math.ceil(Math.max(...ticketCounts));
 
-        setUploadTicket((prevState) => ({
-          ...prevState,
-          series: [
-            {
-              ...prevState.series[0],
-              data: ticketCounts,
-            },
-          ],
-          options: {
-            ...prevState.options,
-            yaxis: {
-              ...prevState.options.yaxis,
-              max: maxTicketCount + 10,
-            },
+      setUploadTicket((prevState) => ({
+        ...prevState,
+        series: [
+          {
+            ...prevState.series[0],
+            data: ticketCounts,
           },
-        }));
-      } catch (error) {
-        console.error("Error fetching ticket data: ", error);
-      }
-    };
+        ],
+        options: {
+          ...prevState.options,
+          yaxis: {
+            ...prevState.options.yaxis,
+            max: maxTicketCount + 10,
+          },
+        },
+      }));
+    } catch (error) {
+      console.error("Error fetching ticket data: ", error);
+    }
+  };
 
+  useEffect(() => {
     // Initial fetch
-    fetchTicketData();
+    fetchTicketData(new Date().setFullYear(new Date().getFullYear(), 0, 1), new Date());
 
     // Real-time listener setup
     const ticketDetailsCollection = collection(db, "TicketDetails");
@@ -386,9 +404,8 @@ function MainDashboard() {
 
         ticketDetailsList.forEach((ticket) => {
           if (ticket?.currentDateTime?.seconds) {
-            const monthIndex = new Date(
-              ticket.currentDateTime.seconds * 1000
-            ).getMonth();
+            const ticketDate = new Date(ticket.currentDateTime.seconds * 1000);
+            const monthIndex = ticketDate.getMonth();
             ticketCounts[monthIndex] += parseInt(ticket.totalTicketCount, 10);
           }
         });
@@ -430,13 +447,9 @@ function MainDashboard() {
 
         sportTicketDetailsList.forEach((ticket) => {
           if (ticket?.currentDateTime?.seconds) {
-            const monthIndex = new Date(
-              ticket.currentDateTime.seconds * 1000
-            ).getMonth();
-            sportTicketCounts[monthIndex] += parseInt(
-              ticket.totalSPortsTicketCount,
-              10
-            );
+            const ticketDate = new Date(ticket.currentDateTime.seconds * 1000);
+            const monthIndex = ticketDate.getMonth();
+            sportTicketCounts[monthIndex] += parseInt(ticket.totalSPortsTicketCount, 10);
           }
         });
 
@@ -474,6 +487,14 @@ function MainDashboard() {
       unsubscribeSportTicketDetails();
     };
   }, []);
+
+  const handleDateRangeChange = (dates) => {
+    if (dates && dates.length === 2) {
+      const [startDate, endDate] = dates;
+      setSelectedDateRange([startDate, endDate]);
+      fetchTicketData(startDate.toDate(), endDate.toDate());
+    }
+  };
 
   // Helper function to format Firestore timestamp to month for overall download ticket
   const getMonthName = (timestamp) => {
@@ -759,9 +780,9 @@ function MainDashboard() {
           buyerTicketDetails.reduce((acc, ticket) => {
             return acc + parseInt(ticket.ticketCount);
           }, 10) +
-            buyerTicketDetails.reduce((acc, ticket) => {
-              return acc + parseInt(ticket.sportsTicketCount);
-            }, 10);
+          buyerTicketDetails.reduce((acc, ticket) => {
+            return acc + parseInt(ticket.sportsTicketCount);
+          }, 10);
         console.log("MT", parseInt(buyerDetailsSnapshot.ticketCount));
         console.log("ST", parseInt(buyerDetailsSnapshot.sportsTicketCount));
         // Calculate remaining ticket count
@@ -1041,21 +1062,39 @@ function MainDashboard() {
     fetchSportsData();
   }, []);
 
-  // over details is bank account given details from the collection "UploaderAccountDetails"
-  const [uploaderCount, setUploaderCount] = useState(0); //"UploaderAccountDetails collection name"
-  const [downloaderCount, setDownloaderCount] = useState(0); //"ticketBuyerDetails collection name"
+  const [uploaderCount, setUploaderCount] = useState(0); // "UploaderAccountDetails collection name"
+  const [downloaderCount, setDownloaderCount] = useState(0); // "ticketBuyerDetails collection name"
 
   const getDocumentCount = async (collectionName) => {
     const querySnapshot = await getDocs(collection(db, collectionName));
     return querySnapshot.size;
   };
 
+  const getUniquePhoneNumberCount = async () => {
+    const querySnapshot = await getDocs(collection(db, "ticketBuyerDetails"));
+    const uniquePhoneNumbers = new Set();
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.phoneNumber) {
+        uniquePhoneNumbers.add(data.phoneNumber);
+      }
+    });
+
+    return uniquePhoneNumbers.size;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      const uploaderCount = await getDocumentCount("UploaderAccountDetails");
-      const downloaderCount = await getDocumentCount("ticketBuyerDetails");
-      setUploaderCount(uploaderCount);
-      setDownloaderCount(downloaderCount);
+      try {
+        const uploaderCount = await getDocumentCount("UploaderAccountDetails");
+        const uniqueDownloaderCount = await getUniquePhoneNumberCount();
+
+        setUploaderCount(uploaderCount);
+        setDownloaderCount(uniqueDownloaderCount);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
     };
 
     fetchData();
@@ -1109,6 +1148,7 @@ function MainDashboard() {
             <h6>Today Activity</h6>
             <RangePicker
               style={{ width: 220, height: 28, fontSize: 12, padding: "16px" }}
+              onChange={handleDateRangeChange}
             />
           </div>
           <div className="mt-3">

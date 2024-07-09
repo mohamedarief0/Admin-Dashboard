@@ -14,15 +14,16 @@ import "bootstrap/dist/css/bootstrap.css";
 function App() {
   return (
     <Routes>
-      {/* Routes for login and password reset */}
+      {/* Route for login ,New User Registration , Password Reset*/}
       <Route path="/" element={<LoginForm />} />
       <Route path="/registration" element={<RegistrationForm />} />
+
       <Route path="/mailvalidation" element={<MailValidation />} />
-      <Route path="/otp" element={<InputOtp />} />
-      <Route path="/resetPassword" element={<ResetPassword />} />
+      {/* <Route path="/otp" element={<InputOtp />} />
+      <Route path="/resetPassword" element={<ResetPassword />} /> */}
 
       {/* Route for Dashboard */}
-      <Route path="/dashboard/:id" element={<Dashboard />}/>
+      <Route path="/dashboard/:id" element={<Dashboard />} />
 
       {/* Route for 404 Page Not Found */}
       <Route path="*" element={<PageNotFound />} />
