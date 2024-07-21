@@ -12,12 +12,12 @@ function Payment() {
   useEffect(() => {
     const fetchBuyerData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "ticketBuyerDetails"));
+        const querySnapshot = await getDocs(
+          collection(db, "ticketBuyerDetails")
+        );
         const data = querySnapshot.docs.map((ticketDoc) => {
           const ticketData = ticketDoc.data();
-          const totalAmountBoth = ticketData.withoutTaxTotalAmountMovie || ticketData.withoutTaxAmountSports;
-          const total = (ticketData.withoutTaxTotalAmountMovie || ticketData.withoutTaxAmountSports) + ticketData.platform;
-
+        
           let formattedDate = "Invalid date";
 
           try {
@@ -29,27 +29,33 @@ function Payment() {
               currentDateTime = new Date(currentDateTime);
             }
 
-            
             if (!isNaN(currentDateTime)) {
-              formattedDate = `${currentDateTime.getDate().toString().padStart(2, '0')}-${
-                (currentDateTime.getMonth() + 1).toString().padStart(2, '0')
-              }-${currentDateTime.getFullYear()}`;
+              formattedDate = `${currentDateTime
+                .getDate()
+                .toString()
+                .padStart(2, "0")}-${(currentDateTime.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}-${currentDateTime.getFullYear()}`;
             }
           } catch (error) {
             console.error("Invalid date format:", error);
           }
 
-
           return {
-            key: ticketDoc.id,
             ...ticketData,
+            key: ticketDoc.id,
             currentDateTime: formattedDate,
-            amount: totalAmountBoth,
-            convenienceFee: ticketData.platform,
+            buyerPhoneNumber: ticketData.phoneNumber,
             ticketDetails: ticketData.movieName || ticketData.teamNames,
             ticketCount: ticketData.ticketCount || ticketData.sportsTicketCount,
-            total,
-
+            userAccountType: ticketData.AccountType,
+            amount:
+              ticketData.withoutTaxTotalAmountMovie ||
+              ticketData.withoutTaxAmountSports,
+            convenienceFee: ticketData.platform,
+            total:
+              (ticketData.withoutTaxTotalAmountMovie ||
+                ticketData.withoutTaxAmountSports) + ticketData.platform,
           };
         });
         setBuyerData(data);
@@ -64,10 +70,12 @@ function Payment() {
   useEffect(() => {
     const fetchUploderData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "successPaymentUploader"));
+        const querySnapshot = await getDocs(
+          collection(db, "successPaymentUploader")
+        );
         const data = querySnapshot.docs.map((ticketDoc) => {
           const ticketData = ticketDoc.data();
-          const total = (ticketData.totalAmount) - ticketData.platform;
+          const total = ticketData.totalAmount - ticketData.platform;
 
           let formattedDate = "Invalid date";
 
@@ -80,30 +88,30 @@ function Payment() {
               currentDateTime = new Date(currentDateTime);
             }
 
-            
             if (!isNaN(currentDateTime)) {
-              formattedDate = `${currentDateTime.getDate().toString().padStart(2, '0')}-${
-                (currentDateTime.getMonth() + 1).toString().padStart(2, '0')
-              }-${currentDateTime.getFullYear()}`;
+              formattedDate = `${currentDateTime
+                .getDate()
+                .toString()
+                .padStart(2, "0")}-${(currentDateTime.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}-${currentDateTime.getFullYear()}`;
             }
           } catch (error) {
             console.error("Invalid date format:", error);
           }
 
-
           return {
             key: ticketDoc.id,
             ...ticketData,
             currentDateTime: formattedDate,
-            uploderLogin:ticketData.uploaderLogin,
+            uploderLogin: ticketData.uploaderLogin,
             amount: ticketData.totalAmount,
             convenienceFee: ticketData.platform,
             ticketDetails: ticketData.ticketDetails,
             ticketCount: ticketData.ticketCount || ticketData.sportsTicketCount,
-            AccountType:ticketData.accountTypeUploder,
-            ticketCount:ticketData.ticketCount,
+            AccountType: ticketData.accountTypeUploder,
+            ticketCount: ticketData.ticketCount,
             total,
-
           };
         });
         setUploderData(data);
@@ -128,25 +136,24 @@ function Payment() {
     },
     {
       title: "User Login",
-      key: "phoneNumber",
-      dataIndex: "phoneNumber",
+      key: "buyerPhoneNumber",
+      dataIndex: "buyerPhoneNumber",
     },
     {
       title: "Ticket Details",
       dataIndex: "ticketDetails",
       key: "ticketDetails",
-      render: (text, record) => (
+      render: (text, record) =>
         record.key !== "Total Amount" ? (
           <>
             {record.ticketDetails} ({record.imageType} ({record.ticketCount}))
           </>
-        ) : null
-      ),
+        ) : null,
     },
     {
       title: "Account Type",
-      key: "AccountType",
-      dataIndex: "AccountType",
+      key: "userAccountType",
+      dataIndex: "userAccountType",
     },
     {
       title: "Amount",
@@ -167,11 +174,17 @@ function Payment() {
       render: (text) => <span style={{ color: "green" }}>₹{text}</span>,
     },
   ];
-  
+
   // Calculate overall totals and format them to one decimal place
-  const totalAmountSumBuyer = parseFloat(buyerData.reduce((acc, item) => acc + item.amount, 0).toFixed(2));
-  const totalConvenienceFeeSumBuyer = parseFloat(buyerData.reduce((acc, item) => acc + item.convenienceFee, 0).toFixed(2));
-  const totalSumBuyer = parseFloat(buyerData.reduce((acc, item) => acc + item.total, 0).toFixed(2));
+  const totalAmountSumBuyer = parseFloat(
+    buyerData.reduce((acc, item) => acc + item.amount, 0).toFixed(2)
+  );
+  const totalConvenienceFeeSumBuyer = parseFloat(
+    buyerData.reduce((acc, item) => acc + item.convenienceFee, 0).toFixed(2)
+  );
+  const totalSumBuyer = parseFloat(
+    buyerData.reduce((acc, item) => acc + item.total, 0).toFixed(2)
+  );
 
   const dataWithTotalRowBuyer = [
     {
@@ -181,7 +194,7 @@ function Payment() {
       total: totalSumBuyer,
     },
   ];
-  
+
   const uploderColumn = [
     {
       title: "ID",
@@ -202,13 +215,12 @@ function Payment() {
       title: "Ticket Details",
       dataIndex: "ticketDetails",
       key: "ticketDetails",
-      render: (text, record) => (
+      render: (text, record) =>
         record.key !== "Total Amount" ? (
           <>
             {record.ticketDetails} ({record.imageType} ({record.ticketCount}))
           </>
-        ) : null
-      ),
+        ) : null,
     },
     {
       title: "Account Type",
@@ -236,9 +248,15 @@ function Payment() {
   ];
 
   // Calculate overall totals and format them to one decimal place
-  const totalAmountSumUploder = parseFloat(uploaderData.reduce((acc, item) => acc + item.amount, 0).toFixed(2));
-  const totalConvenienceFeeSumUploder = parseFloat(uploaderData.reduce((acc, item) => acc + item.convenienceFee, 0).toFixed(2));
-  const totalSuBUploder = parseFloat(uploaderData.reduce((acc, item) => acc + item.total, 0).toFixed(2));
+  const totalAmountSumUploder = parseFloat(
+    uploaderData.reduce((acc, item) => acc + item.amount, 0).toFixed(2)
+  );
+  const totalConvenienceFeeSumUploder = parseFloat(
+    uploaderData.reduce((acc, item) => acc + item.convenienceFee, 0).toFixed(2)
+  );
+  const totalSuBUploder = parseFloat(
+    uploaderData.reduce((acc, item) => acc + item.total, 0).toFixed(2)
+  );
   console.log(totalSuBUploder);
   // console.log(totalConvenienceFeeSumUploder);
 
@@ -250,19 +268,24 @@ function Payment() {
       total: totalSuBUploder,
     },
   ];
-  
 
   return (
     <>
       <div className="buyer-section">
         <h3 className="payment-title">Payment</h3>
         <h6 className="payment-title">Buyer Payment</h6>
-        <Table columns={buyerColumn} dataSource={[...buyerData, ...dataWithTotalRowBuyer]} />
+        <Table
+          columns={buyerColumn}
+          dataSource={[...buyerData, ...dataWithTotalRowBuyer]}
+        />
         <hr />
       </div>
       <div className="uploader-section">
         <h6 className="payment-title">Uploader Payment</h6>
-        <Table columns={uploderColumn} dataSource={[...uploaderData, ...dataWithTotalRowUploader]} />
+        <Table
+          columns={uploderColumn}
+          dataSource={[...uploaderData, ...dataWithTotalRowUploader]}
+        />
       </div>
     </>
   );

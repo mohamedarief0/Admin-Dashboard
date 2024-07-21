@@ -276,7 +276,7 @@ function Token() {
         if (format === "pdf" || format === "image/jpeg") {
           return (
             <span style={{ color: "green" }}>
-              {"jpeg"}({record.ticketCount})
+              {"jpeg"}({record.ticketCount ||record.sportsTicketCount})
             </span>
           );
         } else {

@@ -10,6 +10,7 @@ function LoginForm() {
   const navigate = useNavigate();
   const handleSubmitted = async (values) => {
     const { email, password } = values;
+    // login with superadmin@gmail.com , Qwerty@1
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard/main");

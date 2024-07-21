@@ -435,7 +435,7 @@ const PaymentTracking = ({ setNotificationCount }) => {
           ) : (
             <>
               {record.teamNames} ({record.imageType} ({record.ticketCount}
-              {record.programTime}))
+              ){record.programTime})
             </>
           )}
         </>

@@ -103,7 +103,7 @@ function MainDashboard() {
   const processDocument = (doc, dateField, platformFeesByMonth) => {
     const date = doc[dateField].toDate();
     const month = date.getMonth();
-    platformFeesByMonth[month] += parseFloat(doc.platform) || 0;
+    platformFeesByMonth[month] += parseInt(doc.platform) || 0;
   };
 
   useEffect(() => {
@@ -154,7 +154,7 @@ function MainDashboard() {
 
     const updateChart = (platformFeesByMonth) => {
       const maxPlatformFee =
-        Math.floor(Math.max(...platformFeesByMonth).toFixed(0)) + 10;
+        Math.floor(Math.max(...platformFeesByMonth).toFixed(2)) + 10;
       setTotalIncome((prevState) => ({
         ...prevState,
         series: [
@@ -776,13 +776,25 @@ function MainDashboard() {
         const currentTime = new Date();
 
         // Calculate sold ticket count
-        const soldTicketCount =
-          buyerTicketDetails.reduce((acc, ticket) => {
-            return acc + parseInt(ticket.ticketCount);
-          }, 10) +
-          buyerTicketDetails.reduce((acc, ticket) => {
-            return acc + parseInt(ticket.sportsTicketCount);
-          }, 10);
+        const soldTicketCount = buyerTicketDetails.reduce((acc, ticket) => {
+          const ticketCount = parseInt(ticket.ticketCount, 10);
+          const sportsTicketCount = parseInt(ticket.sportsTicketCount, 10);
+
+          // Check for valid numbers and log detailed info
+          if (isNaN(ticketCount) || isNaN(sportsTicketCount)) {
+            console.warn(
+              `Invalid ticketCount or sportsTicketCount for ticket:`,
+              ticket
+            );
+            return acc;
+          }
+
+          return acc + ticketCount + sportsTicketCount;
+        }, 0);
+
+        console.log("STTT", soldTicketCount);
+
+        console.log("STTT", soldTicketCount);
         console.log("MT", parseInt(buyerDetailsSnapshot.ticketCount));
         console.log("ST", parseInt(buyerDetailsSnapshot.sportsTicketCount));
         // Calculate remaining ticket count

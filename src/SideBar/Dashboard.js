@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { LogoutOutlined } from "@ant-design/icons";
 import { Layout, Menu, theme, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-import './Dashboard.css';  // Import the CSS file
+import "./Dashboard.css"; // Import the CSS file
 //components
 import HeaderComponent from "../Header/HeaderComponent";
 import MainDashboard from "../MainDashboard/MainDashboard";
@@ -129,7 +129,9 @@ const Dashboard = () => {
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <Header style={{ padding: 0, marginBottom: 20, background: colorBgContainer }}>
+      <Header
+        style={{ padding: 0, marginBottom: 20, background: colorBgContainer }}
+      >
         <HeaderComponent userData={userData} />
       </Header>
       <Layout>
@@ -143,7 +145,7 @@ const Dashboard = () => {
             left: 0,
             top: 78,
             bottom: 0,
-            borderRadius:"0px",
+            borderRadius: "0px",
             background: colorBgContainer,
           }}
           className="collaps-slider"
@@ -160,7 +162,14 @@ const Dashboard = () => {
             {userPermissions.includes("MainDashboard") && (
               <Menu.Item
                 key="/dashboard/main"
-                icon={<img src={DashboardMonitorIcon} width={16} height={16} alt="DashboardIcon" />}
+                icon={
+                  <img
+                    src={DashboardMonitorIcon}
+                    width={16}
+                    height={16}
+                    alt="DashboardIcon"
+                  />
+                }
               >
                 Main Dashboard
               </Menu.Item>
@@ -168,7 +177,14 @@ const Dashboard = () => {
             {userPermissions.includes("Token") && (
               <Menu.Item
                 key="/dashboard/token"
-                icon={<img src={TicketIcon} width={16} height={16} alt="ticketIcon" />}
+                icon={
+                  <img
+                    src={TicketIcon}
+                    width={16}
+                    height={16}
+                    alt="ticketIcon"
+                  />
+                }
               >
                 Token's
               </Menu.Item>
@@ -176,7 +192,14 @@ const Dashboard = () => {
             {userPermissions.includes("PaymentTracking") && (
               <Menu.Item
                 key="/dashboard/paymenttracking"
-                icon={<img src={PaymentTrackingIcon} width={16} height={18} alt="PaymentIcon" />}
+                icon={
+                  <img
+                    src={PaymentTrackingIcon}
+                    width={16}
+                    height={18}
+                    alt="PaymentIcon"
+                  />
+                }
               >
                 Payment tracking
               </Menu.Item>
@@ -184,7 +207,14 @@ const Dashboard = () => {
             {userPermissions.includes("Payment") && (
               <Menu.Item
                 key="/dashboard/payment"
-                icon={<img src={RupeeIcon} width={16} height={16} alt="PaymentIcon" />}
+                icon={
+                  <img
+                    src={RupeeIcon}
+                    width={16}
+                    height={16}
+                    alt="PaymentIcon"
+                  />
+                }
               >
                 Payment
               </Menu.Item>
@@ -192,18 +222,36 @@ const Dashboard = () => {
             {userPermissions.includes("Adduser") && (
               <Menu.Item
                 key="/dashboard/user"
-                icon={<img src={AddUserIcon} width={16} height={16} alt="userIcon" />}
+                icon={
+                  <img
+                    src={AddUserIcon}
+                    width={16}
+                    height={16}
+                    alt="userIcon"
+                  />
+                }
               >
                 User's
               </Menu.Item>
             )}
-            <Menu.Item key="/dashboard/logout" icon={<LogoutOutlined />} danger style={{ marginTop: "30px" }}>
+            <Menu.Item
+              key="/dashboard/logout"
+              icon={<LogoutOutlined />}
+              danger
+              style={{ marginTop: "30px" }}
+            >
               Logout
             </Menu.Item>
           </Menu>
         </Sider>
         <Layout style={{ marginLeft: collapsed ? 80 : 200 }}>
-          <Content style={{ padding: "10px 20px 40px", minHeight: 280, overflow: "auto" }}>
+          <Content
+            style={{
+              padding: "10px 20px 40px",
+              minHeight: 280,
+              overflow: "auto",
+            }}
+          >
             {renderContent()}
           </Content>
         </Layout>
